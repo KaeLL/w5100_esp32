@@ -1,3 +1,4 @@
 [submodule "W5100"]
 	path = W5100
 	url = https://github.com/KaeLL/W5100.git
+	branch = master
