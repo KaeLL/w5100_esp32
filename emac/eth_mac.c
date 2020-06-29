@@ -281,12 +281,13 @@ esp_eth_mac_t *esp_eth_mac_new_w5100( const eth_mac_config_t *mac_config )
 	emac->parent.transmit = emac_w5100_transmit;
 	emac->parent.receive = emac_w5100_receive;
 
-	BaseType_t xReturned = xTaskCreate( emac_w5100_task,
+	BaseType_t xReturned = xTaskCreatePinnedToCore( emac_w5100_task,
 		"w5100_tsk",
 		mac_config->rx_task_stack_size,
 		emac,
 		mac_config->rx_task_prio,
-		&emac->rx_task_hdl );
+		&emac->rx_task_hdl,
+		1);
 	MAC_CHECK( xReturned == pdPASS, "create w5100 task failed", err, NULL );
 
 	return &( emac->parent );
