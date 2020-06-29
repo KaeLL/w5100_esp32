@@ -45,29 +45,20 @@ typedef struct
 	int reset_gpio_num;
 } phy_w5100_t;
 
-static esp_err_t w5100_update_link_duplex_speed( phy_w5100_t *w5100 )
-{
-	START;
-	END;
-	return ESP_OK;
-}
-
 static esp_err_t w5100_set_mediator( esp_eth_phy_t *phy, esp_eth_mediator_t *eth )
 {
-	START;
 	PHY_CHECK( eth, "can't set mediator for w5100 to null", err );
 	phy_w5100_t *w5100 = __containerof( phy, phy_w5100_t, parent );
 	w5100->eth = eth;
-	END;
+
 	return ESP_OK;
 err:
-	END;
+
 	return ESP_ERR_INVALID_ARG;
 }
 
 static esp_err_t w5100_get_link( esp_eth_phy_t *phy )
 {
-	START;
 	phy_w5100_t *w5100 = __containerof( phy, phy_w5100_t, parent );
 	esp_eth_mediator_t *eth = w5100->eth;
 
@@ -75,78 +66,59 @@ static esp_err_t w5100_get_link( esp_eth_phy_t *phy )
 	eth->on_state_changed( eth, ETH_STATE_DUPLEX, ( void * )ETH_DUPLEX_FULL );
 	eth->on_state_changed( eth, ETH_STATE_LINK, ( void * )ETH_LINK_UP );
 
-	END;
 	return ESP_OK;
 }
 
 static esp_err_t w5100_reset( esp_eth_phy_t *phy )
 {
-	START;
-	END;
 	return ESP_OK;
 }
 
 static esp_err_t w5100_reset_hw( esp_eth_phy_t *phy )
 {
-	START;
-	END;
 	return ESP_OK;
 }
 
 static esp_err_t w5100_negotiate( esp_eth_phy_t *phy )
 {
-	START;
-	END;
 	return ESP_OK;
 }
 
 static esp_err_t w5100_pwrctl( esp_eth_phy_t *phy, bool enable )
 {
-	START;
-	END;
 	return ESP_OK;
 }
 
 static esp_err_t w5100_set_addr( esp_eth_phy_t *phy, uint32_t addr )
 {
-	START;
-	END;
 	return ESP_OK;
 }
 
 static esp_err_t w5100_get_addr( esp_eth_phy_t *phy, uint32_t *addr )
 {
-	START;
-	END;
 	return ESP_OK;
 }
 
 static esp_err_t w5100_del( esp_eth_phy_t *phy )
 {
-	START;
 	phy_w5100_t *w5100 = __containerof( phy, phy_w5100_t, parent );
 	free( w5100 );
-	END;
+
 	return ESP_OK;
 }
 
 static esp_err_t w5100_init( esp_eth_phy_t *phy )
 {
-	START;
-	END;
 	return ESP_OK;
 }
 
 static esp_err_t w5100_deinit( esp_eth_phy_t *phy )
 {
-	START;
-	END;
 	return ESP_OK;
 }
 
 esp_eth_phy_t *esp_eth_phy_new_w5100( const eth_phy_config_t *config )
 {
-	START;
 	PHY_CHECK( config, "can't set phy config to null", err );
 	phy_w5100_t *w5100 = calloc( 1, sizeof( phy_w5100_t ) );
 	PHY_CHECK( w5100, "calloc w5100 failed", err );
@@ -165,9 +137,9 @@ esp_eth_phy_t *esp_eth_phy_new_w5100( const eth_phy_config_t *config )
 	w5100->parent.get_addr = w5100_get_addr;
 	w5100->parent.set_addr = w5100_set_addr;
 	w5100->parent.del = w5100_del;
-	END;
+
 	return &( w5100->parent );
 err:
-	END;
+
 	return NULL;
 }

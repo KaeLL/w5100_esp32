@@ -20,7 +20,7 @@
 
 #include "w5100_spi.h"
 
-static const char *TAG = "eth_example";
+// static const char *TAG = "eth_example";
 
 void eth_main( void )
 {

@@ -8,12 +8,6 @@ extern "C" {
 #include "esp_eth_mac.h"
 #include "esp_eth_phy.h"
 
-// #define LOG_FUN(X) ESP_LOGW(TAG, X " %s:%d", __func__, __LINE__)
-#define LOG_FUN( X )
-
-#define START LOG_FUN( "start" )
-#define END	  LOG_FUN( "end" );
-
 /**
  * @brief Create w5100 Ethernet MAC instance
  *
