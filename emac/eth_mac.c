@@ -124,7 +124,6 @@ static void emac_w5100_task( void *arg )
 			assert(buffer = malloc(length));
 			if ( emac->parent.receive( &emac->parent, buffer, &length ) == ESP_OK )
 			{
-				ESP_LOGI(TAG, "mac_stack_input: %p | %u", buffer, length);
 				/* pass the buffer to stack (e.g. TCP/IP layer) */
 				if ( length )
 					ESP_ERROR_CHECK( emac->eth->stack_input( emac->eth, buffer, length ) );
@@ -136,6 +135,7 @@ static void emac_w5100_task( void *arg )
 
 			// free(buffer);
 		}
+		vTaskDelay(1);
 	}
 	vTaskDelete( NULL );
 }
@@ -206,8 +206,6 @@ static esp_err_t emac_w5100_transmit( esp_eth_mac_t *mac, uint8_t *buf, uint32_t
 static esp_err_t emac_w5100_receive( esp_eth_mac_t *mac, uint8_t *buf, uint32_t *length )
 {
 	*length = recvfrom( buf );
-
-	ESP_LOGW(TAG, "Bytes read: %u", *length);
 
 	return *length ? ESP_OK : ESP_FAIL;
 }
