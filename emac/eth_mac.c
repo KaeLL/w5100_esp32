@@ -106,7 +106,7 @@ static void emac_w5100_task( void *arg )
 {
 	emac_w5100_t *emac = ( emac_w5100_t * )arg;
 	uint8_t status = 0;
-	uint8_t *buffer = NULL;
+	uint8_t *buffer;
 	uint32_t length = 0;
 
 	ulTaskNotifyTake( pdTRUE, portMAX_DELAY );
@@ -119,11 +119,12 @@ static void emac_w5100_task( void *arg )
 		/* packet received */
 		if ( status & S0_IR_RECV )
 		{
-			length = getS0_RX_RSR();
-			buffer = malloc( length );
-			assert( buffer );
+			assert(length = recv_header());
+			// assert(buffer = heap_caps_malloc(length, MALLOC_CAP_DMA));
+			assert(buffer = malloc(length));
 			if ( emac->parent.receive( &emac->parent, buffer, &length ) == ESP_OK )
 			{
+				ESP_LOGI(TAG, "mac_stack_input: %p | %u", buffer, length);
 				/* pass the buffer to stack (e.g. TCP/IP layer) */
 				if ( length )
 					ESP_ERROR_CHECK( emac->eth->stack_input( emac->eth, buffer, length ) );
@@ -204,14 +205,11 @@ static esp_err_t emac_w5100_transmit( esp_eth_mac_t *mac, uint8_t *buf, uint32_t
 
 static esp_err_t emac_w5100_receive( esp_eth_mac_t *mac, uint8_t *buf, uint32_t *length )
 {
-	esp_err_t ret = ESP_OK;
-	// emac_w5100_t *emac = __containerof( mac, emac_w5100_t, parent );
-
 	*length = recvfrom( buf );
 
-	// ESP_LOG_BUFFER_HEXDUMP("", buf, *length, ESP_LOG_INFO);
+	ESP_LOGW(TAG, "Bytes read: %u", *length);
 
-	return ret;
+	return *length ? ESP_OK : ESP_FAIL;
 }
 
 static esp_err_t emac_w5100_init( esp_eth_mac_t *mac )
