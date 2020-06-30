@@ -44,7 +44,7 @@ uint16_t sendto( uint8_t *buf, uint16_t len )
 	return len;
 }
 
-uint16_t recv_header(void)
+uint16_t recv_header( void )
 {
 	uint16_t data_len, ptr = read_uint16_reg( S0_RX_RD0 );
 

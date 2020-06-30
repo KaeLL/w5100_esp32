@@ -119,9 +119,8 @@ static void emac_w5100_task( void *arg )
 		/* packet received */
 		if ( status & S0_IR_RECV )
 		{
-			assert(length = recv_header());
-			// assert(buffer = heap_caps_malloc(length, MALLOC_CAP_DMA));
-			assert(buffer = malloc(length));
+			assert( length = recv_header() );
+			assert( buffer = malloc( length ) );
 			if ( emac->parent.receive( &emac->parent, buffer, &length ) == ESP_OK )
 			{
 				/* pass the buffer to stack (e.g. TCP/IP layer) */
@@ -135,7 +134,7 @@ static void emac_w5100_task( void *arg )
 
 			// free(buffer);
 		}
-		vTaskDelay(1);
+		vTaskDelay( 1 );
 	}
 	vTaskDelete( NULL );
 }
@@ -283,7 +282,7 @@ esp_eth_mac_t *esp_eth_mac_new_w5100( const eth_mac_config_t *mac_config )
 		emac,
 		mac_config->rx_task_prio,
 		&emac->rx_task_hdl,
-		1);
+		1 );
 	MAC_CHECK( xReturned == pdPASS, "create w5100 task failed", err, NULL );
 
 	return &( emac->parent );
