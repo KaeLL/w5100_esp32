@@ -1,0 +1,58 @@
+menu "W5100 configurations"
+    config W5100_SPI_EN_MANUAL
+        bool "MCU must drive SPI_EN pin"
+        default false
+        help
+            Enable this in case the ESP32 must drive W5100's SPI_EN pin.
+            Needed if the W5100 shares the SPI bus with another device.
+
+    config W5100_SPI_EN_GPIO
+        int "GPIO number of the SPI_EN pin"
+        depends on W5100_SPI_EN_MANUAL
+
+    config W5100_SPI_CLCK
+        int "SPI clock speed (hz)"
+        default 300000
+        help
+            Clock speed to be used to communicate with the chip.
+
+    config EMAC_ENABLE_RECV_TASK_DELAY
+        bool "Enable RX task delay"
+        help
+            Enable the use of a delay at the end of the recv task to prevent
+            it from monopolizing the SPI.
+
+    config EMAC_DELAY_TICKS
+        int "Number of ticks to delay"
+        depends on EMAC_ENABLE_RECV_TASK_DELAY
+        default 1
+
+    config W5100_SPI_BUS_ACQUIRE
+        bool "Enable bus acquiring"
+        help
+            This allows the SPI driver to assume all transactions will be directed to
+            the same device, optimizing back to back transactions. Only enable it if
+            W5100 is the only device in the SPI bus.
+
+    config W5100_CS
+        int "W5100 CS GPIO"
+        default 1
+        help
+            GPIO connected to W5100's Slave Select line
+
+    config W5100_SPI_LOCK
+        bool "Enable driver locks"
+        default true
+        help
+            Enable/disable locks around each SPI transaction.
+            Only disable it if you serialize all accesses to the device.
+
+    config W5100_SPI_BUS
+        int "SPI bus"
+        default 3
+        help
+            SPI bus to be used. Only select 1 if you know what you're doing.
+            1 = SPI_HOST
+            2 = HSPI_HOST
+            3 = VSPI_HOST
+endmenu

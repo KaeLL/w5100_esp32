@@ -1,20 +1,14 @@
 
-#include <string.h>
-#include <stdlib.h>
-#include <sys/cdefs.h>
-#include "driver/gpio.h"
-#include "esp_attr.h"
-#include "esp_log.h"
-#include "esp_eth.h"
-#include "esp_system.h"
-#include "esp_intr_alloc.h"
-#include "esp_heap_caps.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/semphr.h"
-#include "eth_main.h"
 #include "sdkconfig.h"
 
+#include <string.h>
+#include <stdlib.h>
+
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "esp_log.h"
+
+#include "eth_main.h"
 #include "w5100.h"
 #include "w5100_spi.h"
 #include "w5100_socket.h"
@@ -134,30 +128,16 @@ static void emac_w5100_task( void *arg )
 
 			// free(buffer);
 		}
-		vTaskDelay( 1 );
+#if CONFIG_EMAC_ENABLE_RECV_TASK_DELAY
+		vTaskDelay( CONFIG_EMAC_DELAY_TICKS );
+#endif
 	}
 	vTaskDelete( NULL );
 }
 
 static esp_err_t emac_w5100_set_link( esp_eth_mac_t *mac, eth_link_t link )
 {
-	esp_err_t ret = ESP_OK;
-	// emac_w5100_t *emac = __containerof( mac, emac_w5100_t, parent );
-	switch ( link )
-	{
-		case ETH_LINK_UP:
-			// socket(true);
-			break;
-		case ETH_LINK_DOWN:
-			// MAC_CHECK(w5100_stop(emac) == ESP_OK, "w5100 stop failed", out, ESP_FAIL);
-			break;
-		default:
-			MAC_CHECK( false, "unknown link status", out, ESP_ERR_INVALID_ARG );
-			break;
-	}
-out:
-
-	return ret;
+	return ESP_OK;
 }
 
 static esp_err_t emac_w5100_set_speed( esp_eth_mac_t *mac, eth_speed_t speed )
@@ -172,8 +152,6 @@ static esp_err_t emac_w5100_set_duplex( esp_eth_mac_t *mac, eth_duplex_t duplex 
 
 static esp_err_t emac_w5100_set_promiscuous( esp_eth_mac_t *mac, bool enable )
 {
-	// emac_w5100_t *emac = __containerof( mac, emac_w5100_t, parent );
-
 	uint8_t mode_register = IINCHIP_READ( S0_MR );
 
 	if ( enable && !( mode_register & S0_MR_MF ) )
@@ -186,11 +164,6 @@ static esp_err_t emac_w5100_set_promiscuous( esp_eth_mac_t *mac, bool enable )
 
 static esp_err_t emac_w5100_transmit( esp_eth_mac_t *mac, uint8_t *buf, uint32_t length )
 {
-	esp_err_t ret = ESP_OK;
-	// emac_w5100_t *emac = __containerof( mac, emac_w5100_t, parent );
-
-	// ESP_LOG_BUFFER_HEXDUMP("", buf, length, ESP_LOG_WARN);
-
 	while ( length > SSIZE )
 	{
 		sendto( buf, SSIZE );
@@ -199,7 +172,7 @@ static esp_err_t emac_w5100_transmit( esp_eth_mac_t *mac, uint8_t *buf, uint32_t
 
 	sendto( buf, ( uint16_t )length );
 
-	return ret;
+	return ESP_OK;
 }
 
 static esp_err_t emac_w5100_receive( esp_eth_mac_t *mac, uint8_t *buf, uint32_t *length )
@@ -235,6 +208,7 @@ static esp_err_t emac_w5100_deinit( esp_eth_mac_t *mac )
 {
 	emac_w5100_t *emac = __containerof( mac, emac_w5100_t, parent );
 	esp_eth_mediator_t *eth = emac->eth;
+
 	w5100_stop( emac );
 
 	// TODO
@@ -290,9 +264,8 @@ err:
 	if ( emac )
 	{
 		if ( emac->rx_task_hdl )
-		{
 			vTaskDelete( emac->rx_task_hdl );
-		}
+
 		free( emac );
 	}
 

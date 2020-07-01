@@ -1,28 +1,8 @@
-// Copyright 2019 Espressif Systems (Shanghai) PTE LTD
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-#include <string.h>
-#include <stdlib.h>
-#include <sys/cdefs.h>
+
 #include "esp_log.h"
-#include "esp_eth.h"
-#include "eth_phy_regs_struct.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "driver/gpio.h"
-#include "eth_main.h"
 
 #include "w5100.h"
+#include "eth_main.h"
 
 static const char *TAG = "w5100_eth_phy";
 #define PHY_CHECK( a, str, goto_tag, ... )                                          \
@@ -53,7 +33,6 @@ static esp_err_t w5100_set_mediator( esp_eth_phy_t *phy, esp_eth_mediator_t *eth
 
 	return ESP_OK;
 err:
-
 	return ESP_ERR_INVALID_ARG;
 }
 
@@ -119,7 +98,6 @@ static esp_err_t w5100_deinit( esp_eth_phy_t *phy )
 
 esp_eth_phy_t *esp_eth_phy_new_w5100( const eth_phy_config_t *config )
 {
-	PHY_CHECK( config, "can't set phy config to null", err );
 	phy_w5100_t *w5100 = calloc( 1, sizeof( phy_w5100_t ) );
 	PHY_CHECK( w5100, "calloc w5100 failed", err );
 	w5100->addr = config->phy_addr;
@@ -140,6 +118,5 @@ esp_eth_phy_t *esp_eth_phy_new_w5100( const eth_phy_config_t *config )
 
 	return &( w5100->parent );
 err:
-
 	return NULL;
 }
