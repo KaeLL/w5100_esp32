@@ -33,42 +33,30 @@ typedef struct
 	uint8_t addr[ 6 ];
 } emac_w5100_t;
 
-/**
- * @brief Write ENC28J60 internal PHY register
- */
 static esp_err_t emac_w5100_write_phy_reg( esp_eth_mac_t *mac, uint32_t phy_addr, uint32_t phy_reg, uint32_t reg_value )
 {
 	return ESP_OK;
 }
 
-/**
- * @brief Read ENC28J60 internal PHY register
- */
 static esp_err_t emac_w5100_read_phy_reg( esp_eth_mac_t *mac, uint32_t phy_addr, uint32_t phy_reg, uint32_t *reg_value )
 {
 	return ESP_OK;
 }
 
-/**
- * @brief Set mediator for Ethernet MAC
- */
 static esp_err_t emac_w5100_set_mediator( esp_eth_mac_t *mac, esp_eth_mediator_t *eth )
 {
 	esp_err_t ret = ESP_OK;
 	MAC_CHECK( eth, "can't set mac's mediator to null", out, ESP_ERR_INVALID_ARG );
 	emac_w5100_t *emac = __containerof( mac, emac_w5100_t, parent );
 	emac->eth = eth;
-out:
 
+out:
 	return ret;
 }
 
-/**
- * @brief   Stop w5100: disable interrupt and stop receiving packets
- */
 static esp_err_t w5100_stop( emac_w5100_t *emac )
 {
-	close();
+	w5100_close();
 
 	return ESP_OK;
 }
@@ -80,8 +68,8 @@ static esp_err_t emac_w5100_set_addr( esp_eth_mac_t *mac, uint8_t *addr )
 	emac_w5100_t *emac = __containerof( mac, emac_w5100_t, parent );
 	memcpy( emac->addr, addr, 6 );
 	wiz_write_buf( SHAR0, addr, 6 );
-out:
 
+out:
 	return ret;
 }
 
@@ -91,8 +79,8 @@ static esp_err_t emac_w5100_get_addr( esp_eth_mac_t *mac, uint8_t *addr )
 	MAC_CHECK( addr, "can't set mac addr to null", out, ESP_ERR_INVALID_ARG );
 	emac_w5100_t *emac = __containerof( mac, emac_w5100_t, parent );
 	memcpy( addr, emac->addr, 6 );
-out:
 
+out:
 	return ret;
 }
 
@@ -113,7 +101,7 @@ static void emac_w5100_task( void *arg )
 		/* packet received */
 		if ( status & S0_IR_RECV )
 		{
-			assert( length = recv_header() );
+			assert( length = w5100_recv_header() );
 			assert( buffer = malloc( length ) );
 			if ( emac->parent.receive( &emac->parent, buffer, &length ) == ESP_OK )
 			{
@@ -128,11 +116,10 @@ static void emac_w5100_task( void *arg )
 
 			// free(buffer);
 		}
-#if CONFIG_EMAC_ENABLE_RECV_TASK_DELAY
+#if CONFIG_EMAC_RECV_TASK_ENABLE_DELAY
 		vTaskDelay( CONFIG_EMAC_DELAY_TICKS );
 #endif
 	}
-	vTaskDelete( NULL );
 }
 
 static esp_err_t emac_w5100_set_link( esp_eth_mac_t *mac, eth_link_t link )
@@ -166,18 +153,18 @@ static esp_err_t emac_w5100_transmit( esp_eth_mac_t *mac, uint8_t *buf, uint32_t
 {
 	while ( length > SSIZE )
 	{
-		sendto( buf, SSIZE );
+		w5100_send( buf, SSIZE );
 		length -= SSIZE;
 	}
 
-	sendto( buf, ( uint16_t )length );
+	w5100_send( buf, ( uint16_t )length );
 
 	return ESP_OK;
 }
 
 static esp_err_t emac_w5100_receive( esp_eth_mac_t *mac, uint8_t *buf, uint32_t *length )
 {
-	*length = recvfrom( buf );
+	*length = w5100_recv( buf );
 
 	return *length ? ESP_OK : ESP_FAIL;
 }
@@ -188,16 +175,14 @@ static esp_err_t emac_w5100_init( esp_eth_mac_t *mac )
 	emac_w5100_t *emac = __containerof( mac, emac_w5100_t, parent );
 	esp_eth_mediator_t *eth = emac->eth;
 
-	uint8_t mac_addr[ 6 ];
-	ESP_ERROR_CHECK( esp_read_mac( mac_addr, ESP_MAC_ETH ) );
-	iinchip_init( mac_addr );
-	memcpy( emac->addr, mac_addr, 6 );
+	ESP_ERROR_CHECK( esp_read_mac( emac->addr, ESP_MAC_ETH ) );
+	iinchip_init( emac->addr );
 
 	MAC_CHECK( eth->on_state_changed( eth, ETH_STATE_LLINIT, NULL ) == ESP_OK, "lowlevel init failed", out, ESP_FAIL );
 
 	xTaskNotifyGive( emac->rx_task_hdl );
 
-	return ESP_OK;
+	return ret;
 out:
 	eth->on_state_changed( eth, ETH_STATE_DEINIT, NULL );
 
@@ -256,7 +241,12 @@ esp_eth_mac_t *esp_eth_mac_new_w5100( const eth_mac_config_t *mac_config )
 		emac,
 		mac_config->rx_task_prio,
 		&emac->rx_task_hdl,
-		1 );
+#if CONFIG_EMAC_RECV_TASK_ENABLE_CORE_AFFINITY
+		CONFIG_EMAC_RECV_TASK_CORE
+#else
+		tskNO_AFFINITY
+#endif
+	);
 	MAC_CHECK( xReturned == pdPASS, "create w5100 task failed", err, NULL );
 
 	return &( emac->parent );

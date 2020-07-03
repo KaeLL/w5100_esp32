@@ -54,7 +54,7 @@ void w5100_spi_init( void )
 #endif
 }
 
-void spi_transaction( uint32_t tx, uint32_t *rx )
+void w5100_spi_op( uint32_t tx, uint32_t *rx )
 {
 #if CONFIG_W5100_SPI_LOCK
 	xSemaphoreTake( eth_mutex, portMAX_DELAY );

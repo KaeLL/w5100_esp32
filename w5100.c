@@ -22,14 +22,14 @@ void iinchip_init( uint8_t *mac_addr )
 	wiz_write_buf( SHAR0, mac_addr, 6 );
 	IINCHIP_WRITE( TMSR, 3 );
 	IINCHIP_WRITE( RMSR, 3 );
-	socket( true );
+	w5100_socket( true );
 }
 
 uint8_t IINCHIP_WRITE( uint16_t addr, uint8_t data )
 {
 	uint32_t tx = W_PCK( addr, data );
 
-	spi_transaction( tx, NULL );
+	w5100_spi_op( tx, NULL );
 
 	return 1;
 }
@@ -39,7 +39,7 @@ uint8_t IINCHIP_READ( uint16_t addr )
 	w5100_word_t data;
 	uint32_t tx = R_PCK( addr );
 
-	spi_transaction( tx, &data.uint32 );
+	w5100_spi_op( tx, &data.uint32 );
 
 	return data.uint8[ 3 ];
 }

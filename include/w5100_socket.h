@@ -1,14 +1,11 @@
 
-#ifndef _SOCKET_H_
-#define _SOCKET_H_
+#pragma once
 
 #include <stdbool.h>
 #include <stdint.h>
 
-void socket( bool enable_mac_filter );
-void close( void );
-uint16_t sendto( uint8_t *buf, uint16_t len );
-uint16_t recv_header( void );
-uint16_t recvfrom( uint8_t *buf );
-
-#endif
+void w5100_socket( bool enable_mac_filter );
+void w5100_close( void );
+uint16_t w5100_recv( uint8_t *buf );
+uint16_t w5100_recv_header( void );
+uint16_t w5100_send( uint8_t *buf, uint16_t len );

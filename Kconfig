@@ -1,4 +1,10 @@
 menu "W5100 configurations"
+    config W5100_RESET_GPIO
+        int "/RESET pin's GPIO number"
+        default 12
+        help
+            GPIO that is connected to W5100's /RESET pin.
+
     config W5100_SPI_EN_MANUAL
         bool "MCU must drive SPI_EN pin"
         default false
@@ -7,8 +13,9 @@ menu "W5100 configurations"
             Needed if the W5100 shares the SPI bus with another device.
 
     config W5100_SPI_EN_GPIO
-        int "GPIO number of the SPI_EN pin"
         depends on W5100_SPI_EN_MANUAL
+        int "SPI_EN pin's GPIO number"
+        default 22
 
     config W5100_SPI_CLCK
         int "SPI clock speed (hz)"
@@ -16,19 +23,41 @@ menu "W5100 configurations"
         help
             Clock speed to be used to communicate with the chip.
 
-    config EMAC_ENABLE_RECV_TASK_DELAY
+    config EMAC_RECV_TASK_ENABLE_CORE_AFFINITY
+        bool "Enable W5100 recv task core selection"
+        default false
+        help
+            Enable this to manually set W5100 core affinity. May be needed
+            in order to balance loading across cores depending on workload.
+            Leave it disabled for no affinity.
+
+    config EMAC_RECV_TASK_CORE
+        depends on EMAC_RECV_TASK_ENABLE_CORE_AFFINITY
+        int "Which core?"
+        range 0 1
+        default 1
+        help
+            Select the core to pin the task to
+            0 - PRO CPU
+            1 - APP CPU
+
+    config EMAC_RECV_TASK_ENABLE_DELAY
         bool "Enable RX task delay"
+        default true
         help
             Enable the use of a delay at the end of the recv task to prevent
-            it from monopolizing the SPI.
+            it from monopolizing SPI. May be needed when there are other
+            peripherals on the same SPI bus, especially if they're
+            time-sensitive.
 
     config EMAC_DELAY_TICKS
-        int "Number of ticks to delay"
         depends on EMAC_ENABLE_RECV_TASK_DELAY
+        int "Number of ticks to delay"
         default 1
 
     config W5100_SPI_BUS_ACQUIRE
         bool "Enable bus acquiring"
+        default false
         help
             This allows the SPI driver to assume all transactions will be directed to
             the same device, optimizing back to back transactions. Only enable it if
@@ -36,13 +65,13 @@ menu "W5100 configurations"
 
     config W5100_CS
         int "W5100 CS GPIO"
-        default 1
+        default 17
         help
             GPIO connected to W5100's Slave Select line
 
     config W5100_SPI_LOCK
         bool "Enable driver locks"
-        default true
+        default false
         help
             Enable/disable locks around each SPI transaction.
             Only disable it if you serialize all accesses to the device.
@@ -51,8 +80,10 @@ menu "W5100 configurations"
         int "SPI bus"
         default 3
         help
-            SPI bus to be used. Only select 1 if you know what you're doing.
+            SPI bus to be used.
             1 = SPI_HOST
             2 = HSPI_HOST
             3 = VSPI_HOST
+            Only select 1 if you know what you're doing. Check SPI Master documentation
+            for more info.
 endmenu

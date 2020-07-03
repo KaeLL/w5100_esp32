@@ -4,9 +4,9 @@
 #include "w5100.h"
 #include "w5100_socket.h"
 
-void socket( bool enable_mac_filter )
+void w5100_socket( bool enable_mac_filter )
 {
-	close();
+	w5100_close();
 	IINCHIP_WRITE( S0_MR, enable_mac_filter ? S0_MR_MACRAW | S0_MR_MF : S0_MR_MACRAW );
 	IINCHIP_WRITE( S0_CR, S0_CR_OPEN );
 
@@ -14,7 +14,7 @@ void socket( bool enable_mac_filter )
 		;
 }
 
-void close( void )
+void w5100_close( void )
 {
 	IINCHIP_WRITE( S0_CR, S0_CR_CLOSE );
 
@@ -24,7 +24,7 @@ void close( void )
 	IINCHIP_WRITE( S0_IR, 0xFF );
 }
 
-uint16_t sendto( uint8_t *buf, uint16_t len )
+uint16_t w5100_send( uint8_t *buf, uint16_t len )
 {
 	while ( len > getS0_TX_FSR() )
 		;
@@ -44,7 +44,7 @@ uint16_t sendto( uint8_t *buf, uint16_t len )
 	return len;
 }
 
-uint16_t recv_header( void )
+uint16_t w5100_recv_header( void )
 {
 	uint16_t data_len, ptr = read_uint16_reg( S0_RX_RD0 );
 
@@ -55,7 +55,7 @@ uint16_t recv_header( void )
 	return data_len;
 }
 
-uint16_t recvfrom( uint8_t *buf )
+uint16_t w5100_recv( uint8_t *buf )
 {
 	uint16_t data_len, ptr = read_uint16_reg( S0_RX_RD0 );
 

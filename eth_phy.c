@@ -1,4 +1,7 @@
 
+#include "sdkconfig.h"
+
+#include "driver/gpio.h"
 #include "esp_log.h"
 
 #include "w5100.h"
@@ -19,10 +22,6 @@ typedef struct
 {
 	esp_eth_phy_t parent;
 	esp_eth_mediator_t *eth;
-	uint32_t addr;
-	uint32_t reset_timeout_ms;
-	eth_link_t link_status;
-	int reset_gpio_num;
 } phy_w5100_t;
 
 static esp_err_t w5100_set_mediator( esp_eth_phy_t *phy, esp_eth_mediator_t *eth )
@@ -39,11 +38,10 @@ err:
 static esp_err_t w5100_get_link( esp_eth_phy_t *phy )
 {
 	phy_w5100_t *w5100 = __containerof( phy, phy_w5100_t, parent );
-	esp_eth_mediator_t *eth = w5100->eth;
 
-	eth->on_state_changed( eth, ETH_STATE_SPEED, ( void * )ETH_SPEED_10M );
-	eth->on_state_changed( eth, ETH_STATE_DUPLEX, ( void * )ETH_DUPLEX_FULL );
-	eth->on_state_changed( eth, ETH_STATE_LINK, ( void * )ETH_LINK_UP );
+	w5100->eth->on_state_changed( w5100->eth, ETH_STATE_SPEED, ( void * )ETH_SPEED_10M );
+	w5100->eth->on_state_changed( w5100->eth, ETH_STATE_DUPLEX, ( void * )ETH_DUPLEX_FULL );
+	w5100->eth->on_state_changed( w5100->eth, ETH_STATE_LINK, ( void * )ETH_LINK_UP );
 
 	return ESP_OK;
 }
@@ -100,10 +98,6 @@ esp_eth_phy_t *esp_eth_phy_new_w5100( const eth_phy_config_t *config )
 {
 	phy_w5100_t *w5100 = calloc( 1, sizeof( phy_w5100_t ) );
 	PHY_CHECK( w5100, "calloc w5100 failed", err );
-	w5100->addr = config->phy_addr;
-	w5100->reset_timeout_ms = config->reset_timeout_ms;
-	w5100->reset_gpio_num = config->reset_gpio_num;
-	w5100->link_status = ETH_LINK_DOWN;
 	w5100->parent.reset = w5100_reset;
 	w5100->parent.reset_hw = w5100_reset_hw;
 	w5100->parent.init = w5100_init;
