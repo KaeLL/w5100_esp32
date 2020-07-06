@@ -2,7 +2,7 @@
 #ifndef _W5100_H_
 #define _W5100_H_
 
-#define MR0	  0x0 // redefining another macro
+#define MR0	  0x0
 #define SHAR0 0x9
 #define RMSR  0x1A
 #define TMSR  0x1B
