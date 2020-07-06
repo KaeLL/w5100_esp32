@@ -39,9 +39,15 @@ static esp_err_t w5100_get_link( esp_eth_phy_t *phy )
 {
 	phy_w5100_t *w5100 = __containerof( phy, phy_w5100_t, parent );
 
-	w5100->eth->on_state_changed( w5100->eth, ETH_STATE_SPEED, ( void * )ETH_SPEED_10M );
-	w5100->eth->on_state_changed( w5100->eth, ETH_STATE_DUPLEX, ( void * )ETH_DUPLEX_FULL );
-	w5100->eth->on_state_changed( w5100->eth, ETH_STATE_LINK, ( void * )ETH_LINK_UP );
+	static bool been_here;
+
+	if (!been_here)
+	{
+		w5100->eth->on_state_changed( w5100->eth, ETH_STATE_SPEED, ( void * )ETH_SPEED_100M );
+		w5100->eth->on_state_changed( w5100->eth, ETH_STATE_DUPLEX, ( void * )ETH_DUPLEX_FULL );
+		w5100->eth->on_state_changed( w5100->eth, ETH_STATE_LINK, ( void * )ETH_LINK_UP );
+		been_here = true;
+	}
 
 	return ESP_OK;
 }
