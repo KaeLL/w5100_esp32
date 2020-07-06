@@ -7,7 +7,7 @@
 typedef union
 {
 	uint32_t u32;
-	uint8_t u8[4];
+	uint8_t u8[ 4 ];
 } dword;
 
 struct eth_static_ip
@@ -22,8 +22,8 @@ struct eth_static_ip
 
 struct eth_ifconfig
 {
-	char *hostname;				// Max 32 characters
-	struct eth_static_ip sip;	// Data is assumed to be in network order.
+	char *hostname;			  // Max 32 characters
+	struct eth_static_ip sip; // Data is assumed to be in network order.
 };
 
 esp_eth_mac_t *esp_eth_mac_new_w5100( const eth_mac_config_t *mac_config );

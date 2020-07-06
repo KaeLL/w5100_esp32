@@ -41,7 +41,7 @@ static esp_err_t w5100_get_link( esp_eth_phy_t *phy )
 
 	static bool been_here;
 
-	if (!been_here)
+	if ( !been_here )
 	{
 		w5100->eth->on_state_changed( w5100->eth, ETH_STATE_SPEED, ( void * )ETH_SPEED_100M );
 		w5100->eth->on_state_changed( w5100->eth, ETH_STATE_DUPLEX, ( void * )ETH_DUPLEX_FULL );

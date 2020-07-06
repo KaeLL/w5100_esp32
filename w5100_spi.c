@@ -19,9 +19,9 @@ spi_device_handle_t w5100_spi_handle;
 SemaphoreHandle_t eth_mutex;
 #endif
 #if CONFIG_W5100_USE_CUSTOM_TRANS_FUNCTION
-void (*spi_trans_cb)(spi_device_handle_t spi, uint32_t buf_w, uint32_t *buf_r);
+void ( *spi_trans_cb )( spi_device_handle_t spi, uint32_t buf_w, uint32_t *buf_r );
 
-void set_spi_trans_cb(spi_cb_t spi_cb)
+void set_spi_trans_cb( spi_cb_t spi_cb )
 {
 	spi_trans_cb = spi_cb;
 }
@@ -68,7 +68,7 @@ void w5100_spi_op( uint32_t tx, uint32_t *rx )
 	xSemaphoreTake( eth_mutex, portMAX_DELAY );
 #endif
 #if CONFIG_W5100_USE_CUSTOM_TRANS_FUNCTION
-	spi_trans_cb(w5100_spi_handle, tx, rx);
+	spi_trans_cb( w5100_spi_handle, tx, rx );
 #else
 	ESP_ERROR_CHECK( spi_device_transmit( w5100_spi_handle,
 		&( spi_transaction_t ){ .length = 32, .tx_buffer = &tx, .rx_buffer = rx } ) );
