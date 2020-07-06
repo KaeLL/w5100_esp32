@@ -86,4 +86,14 @@ menu "W5100 configurations"
             3 = VSPI_HOST
             Only select 1 if you know what you're doing. Check SPI Master documentation
             for more info.
+
+    config W5100_USE_CUSTOM_TRANS_FUNCTION
+        bool "Use custom SPI transaction wrapper"
+        default true
+        help
+            Enable this to provide your own wrapper over the spi_device(_polling)transmit
+            functions. In practice, this is so a wrapper over transactions with a SPI-bus-wide
+            lock can be provided.
+
+            Refer to: https://github.com/espressif/esp-idf/issues/5517
 endmenu
