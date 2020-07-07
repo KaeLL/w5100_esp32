@@ -22,7 +22,7 @@ struct eth_static_ip
 
 struct eth_ifconfig
 {
-	char *hostname;			  // Max 32 characters
+	char hostname[32];			  // Max 32 characters
 	struct eth_static_ip sip; // Data is assumed to be in network order.
 };
 

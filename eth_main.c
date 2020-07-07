@@ -112,7 +112,7 @@ void eth_main( struct eth_ifconfig *cfg )
 
 	if ( cfg )
 	{
-		if ( cfg->hostname )
+		if ( *cfg->hostname )
 			esp_netif_set_hostname( eth_netif, cfg->hostname );
 
 		if ( cfg->sip.ip.u32 )
