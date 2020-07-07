@@ -116,7 +116,7 @@ static void emac_w5100_task( void *arg )
 
 			// free(buffer);
 		}
-#if CONFIG_EMAC_RECV_TASK_ENABLE_DELAY
+#if CONFIG_EMAC_ENABLE_RECV_TASK_DELAY
 		vTaskDelay( CONFIG_EMAC_DELAY_TICKS );
 #endif
 	}
