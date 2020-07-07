@@ -39,7 +39,7 @@ menu "W5100 configurations"
             0 - PRO CPU
             1 - APP CPU
 
-    config EMAC_RECV_TASK_ENABLE_DELAY
+    config EMAC_ENABLE_RECV_TASK_DELAY
         bool "Enable RX task delay"
         help
             Enable the use of a delay at the end of the recv task to prevent
