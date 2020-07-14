@@ -88,7 +88,7 @@ static void emac_w5100_task( void *arg )
 {
 	emac_w5100_t *emac = ( emac_w5100_t * )arg;
 	uint8_t status = 0;
-	uint8_t *buffer;
+	uint8_t *buffer = NULL;
 	uint32_t length = 0;
 
 	ulTaskNotifyTake( pdTRUE, portMAX_DELAY );
