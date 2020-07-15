@@ -7,6 +7,7 @@ menu "W5100 configurations"
 
     config W5100_SPI_EN_MANUAL
         bool "MCU must drive SPI_EN pin"
+        default y
         help
             Enable this in case the ESP32 must drive W5100's SPI_EN pin.
             Needed if the W5100 shares the SPI bus with another device.
@@ -24,6 +25,7 @@ menu "W5100 configurations"
 
     config EMAC_RECV_TASK_ENABLE_CORE_AFFINITY
         bool "Enable W5100 recv task core selection"
+        default y
         help
             Enable this to manually set W5100's recv task affinity. May be needed
             in order to balance load across cores depending on workload.
@@ -41,6 +43,7 @@ menu "W5100 configurations"
 
     config EMAC_ENABLE_RECV_TASK_DELAY
         bool "Enable RX task delay"
+        default y
         help
             Enable the use of a delay at the end of the recv task to prevent
             it from monopolizing SPI. May be needed when there are other
@@ -84,6 +87,7 @@ menu "W5100 configurations"
 
     config W5100_USE_CUSTOM_TRANS_FUNCTION
         bool "Use custom SPI transaction wrapper"
+        default y
         help
             Enable this to provide your own wrapper over the spi_device(_polling)transmit
             functions. In practice, this is so a wrapper over transactions with a SPI-bus-wide
