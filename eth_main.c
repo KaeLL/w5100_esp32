@@ -133,6 +133,7 @@ void eth_main( struct eth_ifconfig *cfg )
 	ESP_ERROR_CHECK( esp_eth_set_default_handlers( eth_netif ) );
 
 	eth_mac_config_t mac_config = ETH_MAC_DEFAULT_CONFIG();
+	mac_config.rx_task_stack_size = 1536;
 	mac_config.smi_mdc_gpio_num = -1; // w5100 doesn't have SMI interface
 	mac_config.smi_mdio_gpio_num = -1;
 	esp_eth_mac_t *mac = esp_eth_mac_new_w5100( &mac_config );
