@@ -17,12 +17,12 @@ esp_netif_t *eth_netif;
 
 void eth_enable_static_ip( struct eth_static_ip *sip )
 {
-	ESP_ERROR_CHECK(!sip);
-	ESP_ERROR_CHECK(!sip->ip.u32);
-	ESP_ERROR_CHECK(!sip->nm.u32);
-	ESP_ERROR_CHECK(!sip->gw.u32);
-	ESP_ERROR_CHECK(!sip->p_dns.u32);
-	ESP_ERROR_CHECK(!sip->s_dns.u32);
+	ESP_ERROR_CHECK( !sip );
+	ESP_ERROR_CHECK( !sip->ip.u32 );
+	ESP_ERROR_CHECK( !sip->nm.u32 );
+	ESP_ERROR_CHECK( !sip->gw.u32 );
+	ESP_ERROR_CHECK( !sip->p_dns.u32 );
+	ESP_ERROR_CHECK( !sip->s_dns.u32 );
 
 	esp_netif_ip_info_t ip_info;
 	esp_netif_dhcp_status_t dhcp_status;
@@ -76,7 +76,7 @@ void eth_enable_static_ip( struct eth_static_ip *sip )
 	ESP_ERROR_CHECK( esp_netif_set_dns_info( eth_netif, ESP_NETIF_DNS_MAIN, &dns_info ) );
 	dns_info.ip.u_addr.ip4.addr = sip->s_dns.u32;
 	ESP_ERROR_CHECK( esp_netif_set_dns_info( eth_netif, ESP_NETIF_DNS_BACKUP, &dns_info ) );
-	if (sip->f_dns.u32)
+	if ( sip->f_dns.u32 )
 	{
 		dns_info.ip.u_addr.ip4.addr = sip->f_dns.u32;
 		ESP_ERROR_CHECK( esp_netif_set_dns_info( eth_netif, ESP_NETIF_DNS_FALLBACK, &dns_info ) );
