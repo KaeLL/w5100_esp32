@@ -101,8 +101,10 @@ static void emac_w5100_task( void *arg )
 		/* packet received */
 		if ( status & S0_IR_RECV )
 		{
-			assert( length = w5100_recv_header() );
-			assert( buffer = malloc( length ) );
+			length = w5100_recv_header();
+			assert( length );
+			buffer = malloc( length );
+			assert( buffer );
 			if ( emac->parent.receive( &emac->parent, buffer, &length ) == ESP_OK )
 			{
 				/* pass the buffer to stack (e.g. TCP/IP layer) */
