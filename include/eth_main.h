@@ -31,3 +31,5 @@ esp_eth_mac_t *esp_eth_mac_new_w5100( const eth_mac_config_t *mac_config );
 esp_eth_phy_t *esp_eth_phy_new_w5100( const eth_phy_config_t *config );
 
 void eth_main( struct eth_ifconfig *cfg );
+
+void eth_deinit( void );

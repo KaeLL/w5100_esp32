@@ -54,7 +54,7 @@ out:
 	return ret;
 }
 
-static esp_err_t w5100_stop( emac_w5100_t *emac )
+static esp_err_t w5100_stop( void )
 {
 	w5100_close();
 
@@ -89,17 +89,17 @@ static void emac_w5100_task( void *arg )
 	emac_w5100_t *emac = ( emac_w5100_t * )arg;
 	uint8_t status = 0;
 	uint8_t *buffer = NULL;
-	uint32_t length = 0;
+	uint32_t length = 0, notification_value = 0;
 
 	ulTaskNotifyTake( pdTRUE, portMAX_DELAY );
 
-	while ( 1 )
-	{
-		// read interrupt status
-		status = getS0_IR();
+	ESP_LOGI(TAG, "RX INITIATED");
 
-		/* packet received */
-		if ( status & S0_IR_RECV )
+	// watch for task termination notification
+	while ( !( notification_value = ulTaskNotifyTake( pdTRUE, 0 ) ) )
+	{
+		// read interrupt status and check if data arrived
+		if ( getS0_IR() & S0_IR_RECV )
 		{
 			length = w5100_recv_header();
 			assert( length );
@@ -122,6 +122,11 @@ static void emac_w5100_task( void *arg )
 		vTaskDelay( CONFIG_EMAC_DELAY_TICKS );
 #endif
 	}
+
+	xTaskNotifyGive( ( TaskHandle_t )notification_value );
+
+	ESP_LOGI( TAG, "Deleting eth_rx task..." );
+	vTaskDelete( NULL );
 }
 
 static esp_err_t emac_w5100_set_link( esp_eth_mac_t *mac, eth_link_t link )
@@ -194,13 +199,12 @@ out:
 static esp_err_t emac_w5100_deinit( esp_eth_mac_t *mac )
 {
 	emac_w5100_t *emac = __containerof( mac, emac_w5100_t, parent );
-	esp_eth_mediator_t *eth = emac->eth;
 
-	w5100_stop( emac );
+	w5100_stop();
+	xTaskNotify( emac->rx_task_hdl, ( uint32_t )xTaskGetCurrentTaskHandle(), eSetValueWithOverwrite );
+	ulTaskNotifyTake( pdTRUE, portMAX_DELAY );
 
-	// TODO
-
-	eth->on_state_changed( eth, ETH_STATE_DEINIT, NULL );
+	emac->eth->on_state_changed( emac->eth, ETH_STATE_DEINIT, NULL );
 
 	return ESP_OK;
 }
@@ -208,7 +212,6 @@ static esp_err_t emac_w5100_deinit( esp_eth_mac_t *mac )
 static esp_err_t emac_w5100_del( esp_eth_mac_t *mac )
 {
 	emac_w5100_t *emac = __containerof( mac, emac_w5100_t, parent );
-	vTaskDelete( emac->rx_task_hdl );
 	free( emac );
 
 	return ESP_OK;

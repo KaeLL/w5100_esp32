@@ -15,4 +15,6 @@ void set_spi_trans_cb( spi_cb_t spi_cb );
 
 void w5100_spi_init( void );
 
+void w5100_spi_deinit( void );
+
 void w5100_spi_op( uint32_t tx, uint32_t *rx );

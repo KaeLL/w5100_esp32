@@ -5,11 +5,12 @@
 #	include "freertos/FreeRTOS.h"
 #	include "freertos/semphr.h"
 #endif
-
 #if CONFIG_W5100_SPI_EN_MANUAL
 #	include "driver/gpio.h"
 #endif
-
+#if !CONFIG_W5100_USE_CUSTOM_TRANS_FUNCTION
+#	include "esp_attr.h"
+#endif
 #include "driver/spi_master.h"
 
 #include "w5100_spi.h"
@@ -18,13 +19,24 @@ spi_device_handle_t w5100_spi_handle;
 #if CONFIG_W5100_SPI_LOCK
 SemaphoreHandle_t eth_mutex;
 #endif
+
+#if !CONFIG_W5100_USE_CUSTOM_TRANS_FUNCTION
+DMA_ATTR uint32_t tx_tr, rx_tr;
+#endif
+
 #if CONFIG_W5100_USE_CUSTOM_TRANS_FUNCTION
+#	define W5100_TR spi_trans_cb
+
 void ( *spi_trans_cb )( spi_device_handle_t spi, uint32_t buf_w, uint32_t *buf_r );
 
 void set_spi_trans_cb( spi_cb_t spi_cb )
 {
 	spi_trans_cb = spi_cb;
 }
+#elif CONFIG_W5100_POLLING_SPI_TRANS
+#	define W5100_TR spi_device_polling_transmit
+#else
+#	define W5100_TR spi_device_transmit
 #endif
 
 #if CONFIG_W5100_SPI_EN_MANUAL
@@ -38,6 +50,7 @@ void IRAM_ATTR w5100_SPI_En_deassert( spi_transaction_t *trans )
 	gpio_set_level( CONFIG_W5100_SPI_EN_GPIO, 0 );
 }
 #endif
+
 void w5100_spi_init( void )
 {
 #if CONFIG_W5100_SPI_EN_MANUAL
@@ -58,7 +71,22 @@ void w5100_spi_init( void )
 #endif
 
 #if CONFIG_W5100_SPI_BUS_ACQUIRE
-	spi_device_acquire_bus( w5100_spi_handle, portMAX_DELAY );
+	ESP_ERROR_CHECK( spi_device_acquire_bus( w5100_spi_handle, portMAX_DELAY ) );
+#endif
+}
+
+void w5100_spi_deinit( void )
+{
+#if CONFIG_W5100_SPI_LOCK
+	xSemaphoreTake( eth_mutex, portMAX_DELAY );
+#endif
+#if CONFIG_W5100_SPI_BUS_ACQUIRE
+	spi_device_release_bus( w5100_spi_handle );
+#endif
+	ESP_ERROR_CHECK( spi_bus_remove_device( w5100_spi_handle ) );
+#if CONFIG_W5100_SPI_LOCK
+	xSemaphoreGive( eth_mutex );
+	vSemaphoreDelete( eth_mutex );
 #endif
 }
 
@@ -67,11 +95,14 @@ void w5100_spi_op( uint32_t tx, uint32_t *rx )
 #if CONFIG_W5100_SPI_LOCK
 	xSemaphoreTake( eth_mutex, portMAX_DELAY );
 #endif
-#if CONFIG_W5100_USE_CUSTOM_TRANS_FUNCTION
-	spi_trans_cb( w5100_spi_handle, tx, rx );
+#if CONFIG_W5100_CUSTOM_SPI_TRANS
+	W5100_TR( w5100_spi_handle, tx, rx );
 #else
-	ESP_ERROR_CHECK( spi_device_transmit( w5100_spi_handle,
-		&( spi_transaction_t ){ .length = 32, .tx_buffer = &tx, .rx_buffer = rx } ) );
+	tx_tr = tx, rx_tr = rx ? *rx : ( uint32_t )NULL;
+	ESP_ERROR_CHECK( W5100_TR( w5100_spi_handle,
+		&( spi_transaction_t ){ .length = 32, .tx_buffer = &tx_tr, .rx_buffer = &rx_tr } ) );
+	if ( rx )
+		*rx = rx_tr;
 #endif
 #if CONFIG_W5100_SPI_LOCK
 	xSemaphoreGive( eth_mutex );

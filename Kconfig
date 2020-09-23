@@ -85,13 +85,21 @@ menu "W5100 configurations"
             Only select 1 if you know what you're doing. Check SPI Master documentation
             for more info.
 
-    config W5100_USE_CUSTOM_TRANS_FUNCTION
-        bool "Use custom SPI transaction wrapper"
-        default y
+    choice W5100_SPI_TRANS_TYPE
+        prompt "Type of SPI transaction"
+        default W5100_CUSTOM_SPI_TRANS
         help
-            Enable this to provide your own wrapper over the spi_device(_polling)transmit
+            Type of SPI transaction to be used.
+            Prefer Interrupt if you don't know the implications of this.
+            Custom = Enable this to provide your own wrapper over the spi_device(_polling)transmit
             functions. In practice, this is so a wrapper over transactions with a SPI-bus-wide
-            lock can be provided.
+            lock can be provided. Refer to: https://github.com/espressif/esp-idf/issues/5517
 
-            Refer to: https://github.com/espressif/esp-idf/issues/5517
+        config W5100_POLLING_SPI_TRANS
+            bool "Polling"
+        config W5100_INTERRUPT_SPI_TRANS
+            bool "Interrupt"
+        config W5100_CUSTOM_SPI_TRANS
+            bool "Custom"
+    endchoice
 endmenu

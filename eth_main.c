@@ -13,7 +13,10 @@
 
 static const char *const TAG = "eth_example";
 
+esp_eth_config_t eth_config;
 esp_netif_t *eth_netif;
+esp_eth_handle_t eth_handle;
+void *eth_netif_glue;
 
 void eth_enable_static_ip( struct eth_static_ip *sip )
 {
@@ -116,6 +119,35 @@ void eth_enable_static_ip( struct eth_static_ip *sip )
 	ESP_LOGD( TAG, "DHCP STATUS: %d", dhcp_status );
 }
 
+void eth_deinit( void )
+{
+	ESP_LOGE(TAG, "LMAO");
+	ESP_ERROR_CHECK(esp_eth_stop( eth_handle ));
+	ESP_LOGI(TAG, "%d", __LINE__);
+	vTaskDelay(pdTICKS_TO_MS(1000));
+	ESP_ERROR_CHECK(esp_eth_del_netif_glue( eth_netif_glue ));
+	ESP_LOGI(TAG, "%d", __LINE__);
+	vTaskDelay(pdTICKS_TO_MS(1000));
+	ESP_ERROR_CHECK(esp_eth_driver_uninstall( eth_handle ));
+	ESP_LOGI(TAG, "%d", __LINE__);
+	vTaskDelay(pdTICKS_TO_MS(1000));
+	ESP_ERROR_CHECK(eth_config.phy->del( eth_config.phy ));
+	ESP_LOGI(TAG, "%d", __LINE__);
+	vTaskDelay(pdTICKS_TO_MS(1000));
+	ESP_ERROR_CHECK(eth_config.mac->del( eth_config.mac ));
+	ESP_LOGI(TAG, "%d", __LINE__);
+	vTaskDelay(pdTICKS_TO_MS(1000));
+	w5100_spi_deinit();
+	ESP_LOGI(TAG, "%d", __LINE__);
+	vTaskDelay(pdTICKS_TO_MS(1000));
+	ESP_ERROR_CHECK(esp_eth_clear_default_handlers( eth_netif ));
+	ESP_LOGI(TAG, "%d", __LINE__);
+	vTaskDelay(pdTICKS_TO_MS(1000));
+	esp_netif_destroy( eth_netif );
+	ESP_LOGI(TAG, "%d", __LINE__);
+	vTaskDelay(pdTICKS_TO_MS(1000));
+}
+
 void eth_main( struct eth_ifconfig *cfg )
 {
 	eth_netif = esp_netif_new( &( const esp_netif_config_t )ESP_NETIF_DEFAULT_ETH() );
@@ -143,15 +175,17 @@ void eth_main( struct eth_ifconfig *cfg )
 	phy_config.reset_gpio_num = -1;		// w5100 doesn't have a pin to reset internal PHY
 	esp_eth_phy_t *phy = esp_eth_phy_new_w5100( &phy_config );
 
-	esp_eth_config_t eth_config = ETH_DEFAULT_CONFIG( mac, phy );
-	esp_eth_handle_t eth_handle = NULL;
+	esp_eth_config_t eth_cfg = ETH_DEFAULT_CONFIG( mac, phy );
+	eth_config = eth_cfg;
+	// eth_config.check_link_period_ms = UINT32_MAX;
 
 	w5100_spi_init();
 
 	ESP_ERROR_CHECK( esp_eth_driver_install( &eth_config, &eth_handle ) );
 
+	ESP_ERROR_CHECK( !(eth_netif_glue = esp_eth_new_netif_glue( eth_handle ) ));
 	/* attach Ethernet driver to TCP/IP stack */
-	ESP_ERROR_CHECK( esp_netif_attach( eth_netif, esp_eth_new_netif_glue( eth_handle ) ) );
+	ESP_ERROR_CHECK( esp_netif_attach( eth_netif, eth_netif_glue ) );
 	/* start Ethernet driver state machine */
 	ESP_ERROR_CHECK( esp_eth_start( eth_handle ) );
 }
