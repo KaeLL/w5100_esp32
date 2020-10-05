@@ -104,16 +104,16 @@ esp_eth_phy_t *esp_eth_phy_new_w5100( const eth_phy_config_t *config )
 {
 	phy_w5100_t *w5100 = calloc( 1, sizeof( phy_w5100_t ) );
 	PHY_CHECK( w5100, "calloc w5100 failed", err );
+	w5100->parent.set_mediator = w5100_set_mediator;
 	w5100->parent.reset = w5100_reset;
 	w5100->parent.reset_hw = w5100_reset_hw;
 	w5100->parent.init = w5100_init;
 	w5100->parent.deinit = w5100_deinit;
-	w5100->parent.set_mediator = w5100_set_mediator;
 	w5100->parent.negotiate = w5100_negotiate;
 	w5100->parent.get_link = w5100_get_link;
 	w5100->parent.pwrctl = w5100_pwrctl;
-	w5100->parent.get_addr = w5100_get_addr;
 	w5100->parent.set_addr = w5100_set_addr;
+	w5100->parent.get_addr = w5100_get_addr;
 	w5100->parent.del = w5100_del;
 
 	return &( w5100->parent );

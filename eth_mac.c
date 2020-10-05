@@ -3,6 +3,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <inttypes.h>
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -13,7 +14,6 @@
 #include "w5100_spi.h"
 #include "w5100_socket.h"
 
-static const char *TAG = "w5100_eth_mac";
 #define MAC_CHECK( a, str, goto_tag, ret_value, ... )                               \
 	do                                                                              \
 	{                                                                               \
@@ -25,6 +25,11 @@ static const char *TAG = "w5100_eth_mac";
 		}                                                                           \
 	} while ( 0 )
 
+#define W5100_TSK_RUN	  ( ( uint32_t )0 )
+#define W5100_TSK_HOLD_ON ( ( uint32_t )1 )
+#define W5100_TSK_GO_ON	  ( ( uint32_t )2 )
+#define W5100_TSK_DELETE  ( ( uint32_t )3 )
+
 typedef struct
 {
 	esp_eth_mac_t parent;
@@ -32,6 +37,8 @@ typedef struct
 	TaskHandle_t rx_task_hdl;
 	uint8_t addr[ 6 ];
 } emac_w5100_t;
+
+static const char *TAG = "w5100_eth_mac";
 
 static esp_err_t emac_w5100_write_phy_reg( esp_eth_mac_t *mac, uint32_t phy_addr, uint32_t phy_reg, uint32_t reg_value )
 {
@@ -54,11 +61,19 @@ out:
 	return ret;
 }
 
-static esp_err_t w5100_stop( void )
+static esp_err_t emac_w5100_start( esp_eth_mac_t *mac )
 {
+	emac_w5100_t *emac = __containerof( mac, emac_w5100_t, parent );
+	return pdTRUE == xTaskNotify(emac->rx_task_hdl, W5100_TSK_GO_ON, eSetValueWithoutOverwrite) ? ESP_OK : ESP_FAIL;
+}
+
+static esp_err_t emac_w5100_stop( esp_eth_mac_t *mac )
+{
+	emac_w5100_t *emac = __containerof( mac, emac_w5100_t, parent );
+	BaseType_t ret = xTaskNotify(emac->rx_task_hdl, W5100_TSK_HOLD_ON, eSetValueWithoutOverwrite);
 	w5100_close();
 
-	return ESP_OK;
+	return ret == pdPASS ? ESP_OK : ESP_FAIL;
 }
 
 static esp_err_t emac_w5100_set_addr( esp_eth_mac_t *mac, uint8_t *addr )
@@ -87,45 +102,56 @@ out:
 static void emac_w5100_task( void *arg )
 {
 	emac_w5100_t *emac = ( emac_w5100_t * )arg;
-	uint8_t status = 0;
 	uint8_t *buffer = NULL;
 	uint32_t length = 0, notification_value = 0;
-
-	ulTaskNotifyTake( pdTRUE, portMAX_DELAY );
-
-	ESP_LOGI(TAG, "RX INITIATED");
+	TickType_t notif_wait_time = portMAX_DELAY;
 
 	// watch for task termination notification
-	while ( !( notification_value = ulTaskNotifyTake( pdTRUE, 0 ) ) )
+	while ( 1 )
 	{
-		// read interrupt status and check if data arrived
-		if ( getS0_IR() & S0_IR_RECV )
-		{
-			length = w5100_recv_header();
-			assert( length );
-			buffer = malloc( length );
-			assert( buffer );
-			if ( emac->parent.receive( &emac->parent, buffer, &length ) == ESP_OK )
-			{
-				/* pass the buffer to stack (e.g. TCP/IP layer) */
-				if ( length )
-					ESP_ERROR_CHECK( emac->eth->stack_input( emac->eth, buffer, length ) );
-				else
-					ESP_LOGE( TAG, "LENGTH = 0" );
-			}
-			else
-				ESP_LOGE( TAG, "Failed to recv data from ETH" );
+		notification_value = ulTaskNotifyTake( pdTRUE, notif_wait_time );
 
-			// free(buffer);
+		if ( notification_value == W5100_TSK_RUN )
+		{
+			// read interrupt status and check if data arrived
+			if ( getS0_IR() & S0_IR_RECV )
+			{
+				length = w5100_recv_header();
+				assert( length );
+				buffer = malloc( length );
+				assert( buffer );
+				if ( emac->parent.receive( &emac->parent, buffer, &length ) == ESP_OK )
+				{
+					/* pass the buffer to stack (e.g. TCP/IP layer) */
+					if ( length )
+						ESP_ERROR_CHECK( emac->eth->stack_input( emac->eth, buffer, length ) );
+					else
+						ESP_LOGE( TAG, "LENGTH = 0" );
+				}
+				else
+					ESP_LOGE( TAG, "Failed to recv data from ETH" );
+
+				// free(buffer);
+			}
 		}
-#if CONFIG_EMAC_ENABLE_RECV_TASK_DELAY
-		vTaskDelay( CONFIG_EMAC_DELAY_TICKS );
-#endif
+		else if ( notification_value == W5100_TSK_HOLD_ON )
+		{
+			ESP_LOGI(TAG, "W5100_TSK_HOLD_ON");
+			notif_wait_time = portMAX_DELAY;
+		}
+		else if ( notification_value == W5100_TSK_GO_ON )
+		{
+			ESP_LOGI(TAG, "W5100_TSK_GO_ON");
+			notif_wait_time = CONFIG_EMAC_RX_TASK_YIELD_TICKS;
+		}
+		else if ( notification_value == W5100_TSK_DELETE )
+		{
+			ESP_LOGI(TAG, "W5100_TSK_DELETE");
+			break;
+		}
 	}
 
-	xTaskNotifyGive( ( TaskHandle_t )notification_value );
-
-	ESP_LOGI( TAG, "Deleting eth_rx task..." );
+	ESP_LOGI( TAG, "Deleting emac_w5100_task..." );
 	vTaskDelete( NULL );
 }
 
@@ -187,7 +213,7 @@ static esp_err_t emac_w5100_init( esp_eth_mac_t *mac )
 
 	MAC_CHECK( eth->on_state_changed( eth, ETH_STATE_LLINIT, NULL ) == ESP_OK, "lowlevel init failed", out, ESP_FAIL );
 
-	xTaskNotifyGive( emac->rx_task_hdl );
+	ESP_ERROR_CHECK(mac->start(mac));
 
 	return ret;
 out:
@@ -200,13 +226,11 @@ static esp_err_t emac_w5100_deinit( esp_eth_mac_t *mac )
 {
 	emac_w5100_t *emac = __containerof( mac, emac_w5100_t, parent );
 
-	w5100_stop();
-	xTaskNotify( emac->rx_task_hdl, ( uint32_t )xTaskGetCurrentTaskHandle(), eSetValueWithOverwrite );
-	ulTaskNotifyTake( pdTRUE, portMAX_DELAY );
+	BaseType_t ret = xTaskNotify(emac->rx_task_hdl, W5100_TSK_DELETE, eSetValueWithoutOverwrite);
 
 	emac->eth->on_state_changed( emac->eth, ETH_STATE_DEINIT, NULL );
 
-	return ESP_OK;
+	return ret == pdPASS ? ESP_OK : ESP_FAIL;
 }
 
 static esp_err_t emac_w5100_del( esp_eth_mac_t *mac )
@@ -228,17 +252,19 @@ esp_eth_mac_t *esp_eth_mac_new_w5100( const eth_mac_config_t *mac_config )
 	emac->parent.set_mediator = emac_w5100_set_mediator;
 	emac->parent.init = emac_w5100_init;
 	emac->parent.deinit = emac_w5100_deinit;
-	emac->parent.del = emac_w5100_del;
-	emac->parent.write_phy_reg = emac_w5100_write_phy_reg;
+	emac->parent.start = emac_w5100_start;
+	emac->parent.stop = emac_w5100_stop;
+	emac->parent.transmit = emac_w5100_transmit;
+	emac->parent.receive = emac_w5100_receive;
 	emac->parent.read_phy_reg = emac_w5100_read_phy_reg;
+	emac->parent.write_phy_reg = emac_w5100_write_phy_reg;
 	emac->parent.set_addr = emac_w5100_set_addr;
 	emac->parent.get_addr = emac_w5100_get_addr;
 	emac->parent.set_speed = emac_w5100_set_speed;
 	emac->parent.set_duplex = emac_w5100_set_duplex;
 	emac->parent.set_link = emac_w5100_set_link;
 	emac->parent.set_promiscuous = emac_w5100_set_promiscuous;
-	emac->parent.transmit = emac_w5100_transmit;
-	emac->parent.receive = emac_w5100_receive;
+	emac->parent.del = emac_w5100_del;
 
 	BaseType_t xReturned = xTaskCreatePinnedToCore( emac_w5100_task,
 		"w5100_tsk",

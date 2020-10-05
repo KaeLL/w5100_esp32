@@ -41,19 +41,17 @@ menu "W5100 configurations"
             0 - PRO CPU
             1 - APP CPU
 
-    config EMAC_ENABLE_RECV_TASK_DELAY
-        bool "Enable RX task delay"
-        default y
-        help
-            Enable the use of a delay at the end of the recv task to prevent
-            it from monopolizing SPI. May be needed when there are other
-            peripherals on the same SPI bus, especially if they're
-            time-sensitive.
-
-    config EMAC_DELAY_TICKS
-        depends on EMAC_ENABLE_RECV_TASK_DELAY
-        int "Number of ticks to delay"
+    config EMAC_RX_TASK_YIELD_TICKS
+        int "RX task yield duration (ticks)"
+        range 0 2147483647
         default 1
+        help
+            Amount of CPU ticks the RX task will yield after each run of its
+            loop. Since the yield is performed by the ulTaskNotifyTake()
+            function, this is also how long the task will wait for notifications
+            from the EMAC. A value greater than 0 keeps the task from monopolizing
+            CPU, which is especially useful in the presence of time-sensitive
+            code or peripherals.
 
     config W5100_SPI_BUS_ACQUIRE
         bool "Enable bus acquiring"

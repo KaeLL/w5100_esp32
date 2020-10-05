@@ -121,31 +121,22 @@ void eth_enable_static_ip( struct eth_static_ip *sip )
 
 void eth_deinit( void )
 {
-	ESP_LOGE(TAG, "LMAO");
 	ESP_ERROR_CHECK(esp_eth_stop( eth_handle ));
 	ESP_LOGI(TAG, "%d", __LINE__);
-	vTaskDelay(pdTICKS_TO_MS(1000));
 	ESP_ERROR_CHECK(esp_eth_del_netif_glue( eth_netif_glue ));
 	ESP_LOGI(TAG, "%d", __LINE__);
-	vTaskDelay(pdTICKS_TO_MS(1000));
-	ESP_ERROR_CHECK(esp_eth_driver_uninstall( eth_handle ));
-	ESP_LOGI(TAG, "%d", __LINE__);
-	vTaskDelay(pdTICKS_TO_MS(1000));
-	ESP_ERROR_CHECK(eth_config.phy->del( eth_config.phy ));
-	ESP_LOGI(TAG, "%d", __LINE__);
-	vTaskDelay(pdTICKS_TO_MS(1000));
-	ESP_ERROR_CHECK(eth_config.mac->del( eth_config.mac ));
-	ESP_LOGI(TAG, "%d", __LINE__);
-	vTaskDelay(pdTICKS_TO_MS(1000));
-	w5100_spi_deinit();
-	ESP_LOGI(TAG, "%d", __LINE__);
-	vTaskDelay(pdTICKS_TO_MS(1000));
 	ESP_ERROR_CHECK(esp_eth_clear_default_handlers( eth_netif ));
 	ESP_LOGI(TAG, "%d", __LINE__);
-	vTaskDelay(pdTICKS_TO_MS(1000));
+	ESP_ERROR_CHECK(esp_eth_driver_uninstall( eth_handle ));
+	ESP_LOGI(TAG, "%d", __LINE__);
+	ESP_ERROR_CHECK(eth_config.phy->del( eth_config.phy ));
+	ESP_LOGI(TAG, "%d", __LINE__);
+	ESP_ERROR_CHECK(eth_config.mac->del( eth_config.mac ));
+	ESP_LOGI(TAG, "%d", __LINE__);
+	w5100_spi_deinit();
+	ESP_LOGI(TAG, "%d", __LINE__);
 	esp_netif_destroy( eth_netif );
 	ESP_LOGI(TAG, "%d", __LINE__);
-	vTaskDelay(pdTICKS_TO_MS(1000));
 }
 
 void eth_main( struct eth_ifconfig *cfg )
@@ -165,7 +156,7 @@ void eth_main( struct eth_ifconfig *cfg )
 	ESP_ERROR_CHECK( esp_eth_set_default_handlers( eth_netif ) );
 
 	eth_mac_config_t mac_config = ETH_MAC_DEFAULT_CONFIG();
-	mac_config.rx_task_stack_size = 1536;
+	// mac_config.rx_task_stack_size = 1536;
 	mac_config.smi_mdc_gpio_num = -1; // w5100 doesn't have SMI interface
 	mac_config.smi_mdio_gpio_num = -1;
 	esp_eth_mac_t *mac = esp_eth_mac_new_w5100( &mac_config );
