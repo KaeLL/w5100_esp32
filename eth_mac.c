@@ -64,13 +64,13 @@ out:
 static esp_err_t emac_w5100_start( esp_eth_mac_t *mac )
 {
 	emac_w5100_t *emac = __containerof( mac, emac_w5100_t, parent );
-	return pdTRUE == xTaskNotify(emac->rx_task_hdl, W5100_TSK_GO_ON, eSetValueWithoutOverwrite) ? ESP_OK : ESP_FAIL;
+	return pdTRUE == xTaskNotify( emac->rx_task_hdl, W5100_TSK_GO_ON, eSetValueWithoutOverwrite ) ? ESP_OK : ESP_FAIL;
 }
 
 static esp_err_t emac_w5100_stop( esp_eth_mac_t *mac )
 {
 	emac_w5100_t *emac = __containerof( mac, emac_w5100_t, parent );
-	BaseType_t ret = xTaskNotify(emac->rx_task_hdl, W5100_TSK_HOLD_ON, eSetValueWithoutOverwrite);
+	BaseType_t ret = xTaskNotify( emac->rx_task_hdl, W5100_TSK_HOLD_ON, eSetValueWithoutOverwrite );
 	w5100_close();
 
 	return ret == pdPASS ? ESP_OK : ESP_FAIL;
@@ -117,6 +117,9 @@ static void emac_w5100_task( void *arg )
 			if ( getS0_IR() & S0_IR_RECV )
 			{
 				length = w5100_recv_header();
+#if CONFIG_W5100_DEBUG_RX_HEADER
+				ESP_LOGD( TAG, "w5100_recv_header = %" PRIu32, length );
+#endif
 				assert( length );
 				buffer = malloc( length );
 				assert( buffer );
@@ -136,17 +139,17 @@ static void emac_w5100_task( void *arg )
 		}
 		else if ( notification_value == W5100_TSK_HOLD_ON )
 		{
-			ESP_LOGI(TAG, "W5100_TSK_HOLD_ON");
+			ESP_LOGI( TAG, "W5100_TSK_HOLD_ON" );
 			notif_wait_time = portMAX_DELAY;
 		}
 		else if ( notification_value == W5100_TSK_GO_ON )
 		{
-			ESP_LOGI(TAG, "W5100_TSK_GO_ON");
+			ESP_LOGI( TAG, "W5100_TSK_GO_ON" );
 			notif_wait_time = CONFIG_EMAC_RX_TASK_YIELD_TICKS;
 		}
 		else if ( notification_value == W5100_TSK_DELETE )
 		{
-			ESP_LOGI(TAG, "W5100_TSK_DELETE");
+			ESP_LOGI( TAG, "W5100_TSK_DELETE" );
 			break;
 		}
 	}
@@ -184,6 +187,10 @@ static esp_err_t emac_w5100_set_promiscuous( esp_eth_mac_t *mac, bool enable )
 
 static esp_err_t emac_w5100_transmit( esp_eth_mac_t *mac, uint8_t *buf, uint32_t length )
 {
+#if CONFIG_W5100_DEBUG_TX
+	ESP_LOGD( TAG, "buf = %p\tlength = %" PRIu32, buf, length );
+	ESP_LOG_BUFFER_HEXDUMP( __func__, buf, length, ESP_LOG_DEBUG );
+#endif
 	while ( length > SSIZE )
 	{
 		w5100_send( buf, SSIZE );
@@ -198,7 +205,10 @@ static esp_err_t emac_w5100_transmit( esp_eth_mac_t *mac, uint8_t *buf, uint32_t
 static esp_err_t emac_w5100_receive( esp_eth_mac_t *mac, uint8_t *buf, uint32_t *length )
 {
 	*length = w5100_recv( buf );
-
+#if CONFIG_W5100_DEBUG_RX
+	ESP_LOGD( TAG, "buf = %p\tlength = %" PRIu32, buf, *length );
+	ESP_LOG_BUFFER_HEXDUMP( __func__, buf, *length, ESP_LOG_DEBUG );
+#endif
 	return *length ? ESP_OK : ESP_FAIL;
 }
 
@@ -213,7 +223,7 @@ static esp_err_t emac_w5100_init( esp_eth_mac_t *mac )
 
 	MAC_CHECK( eth->on_state_changed( eth, ETH_STATE_LLINIT, NULL ) == ESP_OK, "lowlevel init failed", out, ESP_FAIL );
 
-	ESP_ERROR_CHECK(mac->start(mac));
+	ESP_ERROR_CHECK( mac->start( mac ) );
 
 	return ret;
 out:
@@ -226,11 +236,9 @@ static esp_err_t emac_w5100_deinit( esp_eth_mac_t *mac )
 {
 	emac_w5100_t *emac = __containerof( mac, emac_w5100_t, parent );
 
-	BaseType_t ret = xTaskNotify(emac->rx_task_hdl, W5100_TSK_DELETE, eSetValueWithoutOverwrite);
-
 	emac->eth->on_state_changed( emac->eth, ETH_STATE_DEINIT, NULL );
 
-	return ret == pdPASS ? ESP_OK : ESP_FAIL;
+	return xTaskNotify( emac->rx_task_hdl, W5100_TSK_DELETE, eSetValueWithoutOverwrite ) == pdPASS ? ESP_OK : ESP_FAIL;
 }
 
 static esp_err_t emac_w5100_del( esp_eth_mac_t *mac )

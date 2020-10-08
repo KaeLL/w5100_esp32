@@ -119,26 +119,6 @@ void eth_enable_static_ip( struct eth_static_ip *sip )
 	ESP_LOGD( TAG, "DHCP STATUS: %d", dhcp_status );
 }
 
-void eth_deinit( void )
-{
-	ESP_ERROR_CHECK(esp_eth_stop( eth_handle ));
-	ESP_LOGI(TAG, "%d", __LINE__);
-	ESP_ERROR_CHECK(esp_eth_del_netif_glue( eth_netif_glue ));
-	ESP_LOGI(TAG, "%d", __LINE__);
-	ESP_ERROR_CHECK(esp_eth_clear_default_handlers( eth_netif ));
-	ESP_LOGI(TAG, "%d", __LINE__);
-	ESP_ERROR_CHECK(esp_eth_driver_uninstall( eth_handle ));
-	ESP_LOGI(TAG, "%d", __LINE__);
-	ESP_ERROR_CHECK(eth_config.phy->del( eth_config.phy ));
-	ESP_LOGI(TAG, "%d", __LINE__);
-	ESP_ERROR_CHECK(eth_config.mac->del( eth_config.mac ));
-	ESP_LOGI(TAG, "%d", __LINE__);
-	w5100_spi_deinit();
-	ESP_LOGI(TAG, "%d", __LINE__);
-	esp_netif_destroy( eth_netif );
-	ESP_LOGI(TAG, "%d", __LINE__);
-}
-
 void eth_main( struct eth_ifconfig *cfg )
 {
 	eth_netif = esp_netif_new( &( const esp_netif_config_t )ESP_NETIF_DEFAULT_ETH() );
@@ -174,7 +154,7 @@ void eth_main( struct eth_ifconfig *cfg )
 
 	ESP_ERROR_CHECK( esp_eth_driver_install( &eth_config, &eth_handle ) );
 
-	ESP_ERROR_CHECK( !(eth_netif_glue = esp_eth_new_netif_glue( eth_handle ) ));
+	ESP_ERROR_CHECK( !( eth_netif_glue = esp_eth_new_netif_glue( eth_handle ) ) );
 	/* attach Ethernet driver to TCP/IP stack */
 	ESP_ERROR_CHECK( esp_netif_attach( eth_netif, eth_netif_glue ) );
 	/* start Ethernet driver state machine */

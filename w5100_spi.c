@@ -42,12 +42,12 @@ void set_spi_trans_cb( spi_cb_t spi_cb )
 #if CONFIG_W5100_SPI_EN_MANUAL
 void IRAM_ATTR w5100_SPI_EN_assert( spi_transaction_t *trans )
 {
-	gpio_set_level( CONFIG_W5100_SPI_EN_GPIO, 1 );
+	GPIO.out_w1ts = ( 1 << CONFIG_W5100_SPI_EN_GPIO );
 }
 
 void IRAM_ATTR w5100_SPI_En_deassert( spi_transaction_t *trans )
 {
-	gpio_set_level( CONFIG_W5100_SPI_EN_GPIO, 0 );
+	GPIO.out_w1tc = ( 1 << CONFIG_W5100_SPI_EN_GPIO );
 }
 #endif
 
@@ -77,15 +77,11 @@ void w5100_spi_init( void )
 
 void w5100_spi_deinit( void )
 {
-#if CONFIG_W5100_SPI_LOCK
-	xSemaphoreTake( eth_mutex, portMAX_DELAY );
-#endif
 #if CONFIG_W5100_SPI_BUS_ACQUIRE
 	spi_device_release_bus( w5100_spi_handle );
 #endif
 	ESP_ERROR_CHECK( spi_bus_remove_device( w5100_spi_handle ) );
 #if CONFIG_W5100_SPI_LOCK
-	xSemaphoreGive( eth_mutex );
 	vSemaphoreDelete( eth_mutex );
 #endif
 }

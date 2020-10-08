@@ -5,6 +5,26 @@ menu "W5100 configurations"
         help
             GPIO connected to W5100's /RESET pin.
 
+    menu "W5100 Debug configurations"
+        config W5100_DEBUG_TX
+            bool "TX"
+            help
+                Enable this option to hexdump everything sent to the EMAC to be
+                transmitted to the chip.
+
+        config W5100_DEBUG_RX
+            bool "RX"
+            help
+                Enable this option to hexdump everything received from the chip
+                by the EMAC.
+
+        config W5100_DEBUG_RX_HEADER
+            bool "RX header"
+            help
+                Enable this to show the value of the 2 byte header that indicates
+                the size of the packet to be read from the chip.
+    endmenu
+
     config W5100_SPI_EN_MANUAL
         bool "MCU must drive SPI_EN pin"
         default y
