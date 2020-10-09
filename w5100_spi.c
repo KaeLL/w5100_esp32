@@ -8,7 +8,7 @@
 #if CONFIG_W5100_SPI_EN_MANUAL
 #	include "driver/gpio.h"
 #endif
-#if !CONFIG_W5100_USE_CUSTOM_TRANS_FUNCTION
+#if !CONFIG_W5100_CUSTOM_SPI_TRANS
 #	include "esp_attr.h"
 #endif
 #include "driver/spi_master.h"
@@ -20,11 +20,11 @@ spi_device_handle_t w5100_spi_handle;
 SemaphoreHandle_t eth_mutex;
 #endif
 
-#if !CONFIG_W5100_USE_CUSTOM_TRANS_FUNCTION
+#if !CONFIG_W5100_CUSTOM_SPI_TRANS
 DMA_ATTR uint32_t tx_tr, rx_tr;
 #endif
 
-#if CONFIG_W5100_USE_CUSTOM_TRANS_FUNCTION
+#if CONFIG_W5100_CUSTOM_SPI_TRANS
 #	define W5100_TR spi_trans_cb
 
 void ( *spi_trans_cb )( spi_device_handle_t spi, uint32_t buf_w, uint32_t *buf_r );

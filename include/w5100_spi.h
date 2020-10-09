@@ -5,7 +5,7 @@
 
 #include <stdint.h>
 
-#ifdef CONFIG_W5100_USE_CUSTOM_TRANS_FUNCTION
+#ifdef CONFIG_W5100_CUSTOM_SPI_TRANS
 #	include "driver/spi_master.h"
 
 typedef void ( *spi_cb_t )( spi_device_handle_t spi, uint32_t buf_w, uint32_t *buf_r );
