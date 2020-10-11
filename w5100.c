@@ -9,13 +9,6 @@
 #define W_PCK( address, data ) ( __builtin_bswap32( ( 0xF0000000 | ( address ) << 8 | ( data ) ) ) )
 #define R_PCK( address )	   ( __builtin_bswap32( ( 0x0F000000 | ( address ) << 8 ) ) )
 
-typedef union
-{
-	uint32_t uint32;
-	uint16_t uint16[ 2 ];
-	uint8_t uint8[ 4 ];
-} w5100_word_t;
-
 void iinchip_init( uint8_t *mac_addr )
 {
 	IINCHIP_WRITE( MR0, MR_RST );
@@ -36,12 +29,11 @@ uint8_t IINCHIP_WRITE( uint16_t addr, uint8_t data )
 
 uint8_t IINCHIP_READ( uint16_t addr )
 {
-	w5100_word_t data;
-	uint32_t tx = R_PCK( addr );
+	uint32_t data, tx = R_PCK( addr );
 
-	w5100_spi_op( tx, &data.uint32 );
+	w5100_spi_op( tx, &data );
 
-	return data.uint8[ 3 ];
+	return data >> 24;
 }
 
 void wiz_write_buf( uint16_t addr, uint8_t *buf, uint16_t len )
