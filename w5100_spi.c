@@ -42,8 +42,8 @@ void IRAM_ATTR w5100_SPI_En_deassert( spi_transaction_t *trans )
 void w5100_spi_mtx_set( void *spi_mtx )
 {
 #if CONFIG_W5100_SPI_LOCK
-	ESP_ERROR_CHECK(!spi_mtx);
-	eth_mutex = (SemaphoreHandle_t)spi_mtx;
+	ESP_ERROR_CHECK( !spi_mtx );
+	eth_mutex = ( SemaphoreHandle_t )spi_mtx;
 	user_provided_mutex = true;
 #endif
 }
@@ -54,10 +54,10 @@ void w5100_spi_init( void )
 	gpio_set_direction( CONFIG_W5100_SPI_EN_GPIO, GPIO_MODE_OUTPUT );
 #endif
 #if CONFIG_W5100_SPI_LOCK
-	if (user_provided_mutex)
-		xSemaphoreTake(eth_mutex, portMAX_DELAY);
+	if ( user_provided_mutex )
+		xSemaphoreTake( eth_mutex, portMAX_DELAY );
 	else
-		ESP_ERROR_CHECK(!(eth_mutex = xSemaphoreCreateMutex()));
+		ESP_ERROR_CHECK( !( eth_mutex = xSemaphoreCreateMutex() ) );
 #endif
 	ESP_ERROR_CHECK( spi_bus_add_device(
 		CONFIG_W5100_SPI_BUS - 1,
@@ -69,8 +69,8 @@ void w5100_spi_init( void )
 		},
 		&w5100_spi_handle ) );
 #if CONFIG_W5100_SPI_LOCK
-	if (user_provided_mutex)
-		xSemaphoreGive(eth_mutex);
+	if ( user_provided_mutex )
+		xSemaphoreGive( eth_mutex );
 #endif
 #if CONFIG_W5100_SPI_BUS_ACQUIRE
 	ESP_ERROR_CHECK( spi_device_acquire_bus( w5100_spi_handle, portMAX_DELAY ) );
@@ -80,16 +80,16 @@ void w5100_spi_init( void )
 void w5100_spi_deinit( void )
 {
 #if CONFIG_W5100_SPI_LOCK
-	if (user_provided_mutex)
-		xSemaphoreTake(eth_mutex, portMAX_DELAY);
+	if ( user_provided_mutex )
+		xSemaphoreTake( eth_mutex, portMAX_DELAY );
 #endif
 #if CONFIG_W5100_SPI_BUS_ACQUIRE
 	spi_device_release_bus( w5100_spi_handle );
 #endif
 	ESP_ERROR_CHECK( spi_bus_remove_device( w5100_spi_handle ) );
 #if CONFIG_W5100_SPI_LOCK
-	if (user_provided_mutex)
-		xSemaphoreGive(eth_mutex);
+	if ( user_provided_mutex )
+		xSemaphoreGive( eth_mutex );
 	else
 		vSemaphoreDelete( eth_mutex );
 #endif
