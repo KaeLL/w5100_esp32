@@ -3,6 +3,7 @@
 
 #if CONFIG_W5100_SPI_LOCK
 #	include "freertos/FreeRTOS.h"
+#	include "freertos/task.h"
 #	include "freertos/semphr.h"
 #endif
 #if CONFIG_W5100_SPI_EN_MANUAL
@@ -11,7 +12,7 @@
 #include "esp_attr.h"
 #include "driver/spi_master.h"
 
-#include "w5100_spi.h"
+#include "w5100_ll.h"
 
 #if CONFIG_W5100_POLLING_SPI_TRANS
 #	define W5100_TR spi_device_polling_transmit
@@ -39,6 +40,14 @@ void IRAM_ATTR w5100_SPI_En_deassert( spi_transaction_t *trans )
 }
 #endif
 
+void w5100_ll_hw_reset( void )
+{
+	ESP_ERROR_CHECK( gpio_set_direction( CONFIG_W5100_RESET_GPIO, GPIO_MODE_OUTPUT ) );
+	ESP_ERROR_CHECK( gpio_set_level( CONFIG_W5100_RESET_GPIO, 0 ) );
+	vTaskDelay( 1 );
+	ESP_ERROR_CHECK( gpio_set_level( CONFIG_W5100_RESET_GPIO, 1 ) );
+}
+
 void w5100_spi_mtx_set( void *spi_mtx )
 {
 #if CONFIG_W5100_SPI_LOCK
@@ -51,7 +60,7 @@ void w5100_spi_mtx_set( void *spi_mtx )
 void w5100_spi_init( void )
 {
 #if CONFIG_W5100_SPI_EN_MANUAL
-	gpio_set_direction( CONFIG_W5100_SPI_EN_GPIO, GPIO_MODE_OUTPUT );
+	ESP_ERROR_CHECK( gpio_set_direction( CONFIG_W5100_SPI_EN_GPIO, GPIO_MODE_OUTPUT ) );
 #endif
 #if CONFIG_W5100_SPI_LOCK
 	if ( user_provided_mutex )

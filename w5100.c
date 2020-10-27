@@ -2,20 +2,23 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "w5100_socket.h"
 #include "w5100.h"
-#include "w5100_spi.h"
+#include "w5100_ll.h"
 
 #define W_PCK( address, data ) ( __builtin_bswap32( ( 0xF0000000 | ( address ) << 8 | ( data ) ) ) )
 #define R_PCK( address )	   ( __builtin_bswap32( ( 0x0F000000 | ( address ) << 8 ) ) )
 
 void iinchip_init( uint8_t *mac_addr )
 {
+	w5100_ll_hw_reset();
 	IINCHIP_WRITE( MR0, MR_RST );
+
+	while ( IINCHIP_READ( MR0 ) )
+		;
+
 	wiz_write_buf( SHAR0, mac_addr, 6 );
 	IINCHIP_WRITE( TMSR, 3 );
 	IINCHIP_WRITE( RMSR, 3 );
-	w5100_socket( true );
 }
 
 uint8_t IINCHIP_WRITE( uint16_t addr, uint8_t data )

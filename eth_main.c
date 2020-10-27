@@ -9,7 +9,7 @@
 #include "sdkconfig.h"
 
 #include "eth_main.h"
-#include "w5100_spi.h"
+#include "w5100_ll.h"
 
 static const char *const TAG = "eth_example";
 
@@ -126,7 +126,7 @@ void eth_main( struct eth_ifconfig *cfg )
 	if ( cfg )
 	{
 		if ( *cfg->hostname )
-			esp_netif_set_hostname( eth_netif, cfg->hostname );
+			ESP_ERROR_CHECK( esp_netif_set_hostname( eth_netif, cfg->hostname ) );
 
 		if ( cfg->sip.ip.u32 )
 			eth_enable_static_ip( &cfg->sip );

@@ -5,6 +5,8 @@
 
 #include <stdint.h>
 
+void w5100_ll_hw_reset( void );
+
 void w5100_spi_mtx_set( void *spi_mtx );
 
 void w5100_spi_init( void );

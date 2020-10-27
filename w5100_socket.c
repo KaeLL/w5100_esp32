@@ -6,12 +6,15 @@
 
 void w5100_socket( bool enable_mac_filter )
 {
-	w5100_close();
-	IINCHIP_WRITE( S0_MR, enable_mac_filter ? S0_MR_MACRAW | S0_MR_MF : S0_MR_MACRAW );
-	IINCHIP_WRITE( S0_CR, S0_CR_OPEN );
+	do
+	{
+		w5100_close();
+		IINCHIP_WRITE( S0_MR, enable_mac_filter ? S0_MR_MACRAW | S0_MR_MF : S0_MR_MACRAW );
+		IINCHIP_WRITE( S0_CR, S0_CR_OPEN );
 
-	while ( IINCHIP_READ( S0_CR ) )
-		;
+		while ( IINCHIP_READ( S0_CR ) )
+			;
+	} while ( IINCHIP_READ( S0_SR ) != SOCK_MACRAW );
 }
 
 void w5100_close( void )

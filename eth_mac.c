@@ -11,7 +11,7 @@
 
 #include "eth_main.h"
 #include "w5100.h"
-#include "w5100_spi.h"
+#include "w5100_ll.h"
 #include "w5100_socket.h"
 
 #define MAC_CHECK( a, str, goto_tag, ret_value, ... )                               \
@@ -220,6 +220,7 @@ static esp_err_t emac_w5100_init( esp_eth_mac_t *mac )
 
 	ESP_ERROR_CHECK( esp_read_mac( emac->addr, ESP_MAC_ETH ) );
 	iinchip_init( emac->addr );
+	w5100_socket( false );
 
 	MAC_CHECK( eth->on_state_changed( eth, ETH_STATE_LLINIT, NULL ) == ESP_OK, "lowlevel init failed", out, ESP_FAIL );
 
