@@ -1,4 +1,7 @@
 
+#include <assert.h>
+#include <stdlib.h>
+
 #include "w5100.h"
 #include "w5100_socket.h"
 
@@ -45,18 +48,7 @@ uint16_t w5100_send( uint8_t *buf, uint16_t len )
 	return len;
 }
 
-uint16_t w5100_recv_header( void )
-{
-	uint16_t data_len, ptr = read_uint16_reg( S0_RX_RD0 );
-
-	read_data( ptr, ( uint8_t * )&data_len, 2 );
-	data_len = __builtin_bswap16( data_len ) - 2;
-	write_uint16_reg( S0_RX_RD0, ptr + 2 );
-
-	return data_len;
-}
-
-uint16_t w5100_recv( uint8_t *buf )
+uint16_t w5100_recv( uint8_t **buf )
 {
 	uint16_t data_len, ptr = read_uint16_reg( S0_RX_RD0 );
 
@@ -64,7 +56,10 @@ uint16_t w5100_recv( uint8_t *buf )
 	ptr += 2;
 	data_len = __builtin_bswap16( data_len ) - 2;
 
-	read_data( ptr, buf, data_len );
+	*buf = malloc(data_len);
+	assert(*buf);
+
+	read_data( ptr, *buf, data_len );
 	write_uint16_reg( S0_RX_RD0, ptr + data_len );
 
 	IINCHIP_WRITE( S0_CR, S0_CR_RECV );

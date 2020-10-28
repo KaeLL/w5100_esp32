@@ -114,27 +114,14 @@ static void emac_w5100_task( void *arg )
 		if ( notification_value == W5100_TSK_RUN )
 		{
 			// read interrupt status and check if data arrived
-			if ( getS0_IR() & S0_IR_RECV )
+			while ( getS0_IR() & S0_IR_RECV )
 			{
-				length = w5100_recv_header();
-#if CONFIG_W5100_DEBUG_RX_HEADER
-				ESP_LOGD( TAG, "w5100_recv_header = %" PRIu32, length );
-#endif
-				assert( length );
-				buffer = malloc( length );
-				assert( buffer );
-				if ( emac->parent.receive( &emac->parent, buffer, &length ) == ESP_OK )
-				{
+				emac->parent.receive( &emac->parent, (uint8_t *)&buffer, &length );
+				if ( length )
 					/* pass the buffer to stack (e.g. TCP/IP layer) */
-					if ( length )
-						ESP_ERROR_CHECK( emac->eth->stack_input( emac->eth, buffer, length ) );
-					else
-						ESP_LOGE( TAG, "LENGTH = 0" );
-				}
+					ESP_ERROR_CHECK( emac->eth->stack_input( emac->eth, buffer, length ) );
 				else
-					ESP_LOGE( TAG, "Failed to recv data from ETH" );
-
-				// free(buffer);
+					ESP_LOGE( TAG, "LENGTH = 0" );
 			}
 		}
 		else if ( notification_value == W5100_TSK_HOLD_ON )
@@ -204,12 +191,12 @@ static esp_err_t emac_w5100_transmit( esp_eth_mac_t *mac, uint8_t *buf, uint32_t
 
 static esp_err_t emac_w5100_receive( esp_eth_mac_t *mac, uint8_t *buf, uint32_t *length )
 {
-	*length = w5100_recv( buf );
+	*length = w5100_recv( (uint8_t **)buf );
 #if CONFIG_W5100_DEBUG_RX
 	ESP_LOGD( TAG, "buf = %p\tlength = %" PRIu32, buf, *length );
 	ESP_LOG_BUFFER_HEXDUMP( __func__, buf, *length, ESP_LOG_DEBUG );
 #endif
-	return *length ? ESP_OK : ESP_FAIL;
+	return ESP_OK;
 }
 
 static esp_err_t emac_w5100_init( esp_eth_mac_t *mac )
