@@ -2,6 +2,8 @@
 #ifndef _W5100_H_
 #define _W5100_H_
 
+#include <stdint.h>
+
 #define MR0	  0x0
 #define SHAR0 0x9
 #define RMSR  0x1A
@@ -64,10 +66,10 @@
 #define SBUFBASEADDRESS 0x4000 /**< Tx buffer base address by each channel */
 #define RBUFBASEADDRESS 0x6000 /**< Rx buffer base address by each channel */
 
-void iinchip_init( uint8_t *mac_addr );
+void iinchip_init( void );
 
 uint8_t IINCHIP_READ( uint16_t addr );
-uint8_t IINCHIP_WRITE( uint16_t addr, uint8_t data );
+void IINCHIP_WRITE( uint16_t addr, uint8_t data );
 void wiz_read_buf( uint16_t addr, uint8_t *buf, uint16_t len );
 void wiz_write_buf( uint16_t addr, uint8_t *buf, uint16_t len );
 

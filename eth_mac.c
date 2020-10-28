@@ -218,8 +218,7 @@ static esp_err_t emac_w5100_init( esp_eth_mac_t *mac )
 	emac_w5100_t *emac = __containerof( mac, emac_w5100_t, parent );
 	esp_eth_mediator_t *eth = emac->eth;
 
-	ESP_ERROR_CHECK( esp_read_mac( emac->addr, ESP_MAC_ETH ) );
-	iinchip_init( emac->addr );
+	iinchip_init();
 	w5100_socket( false );
 
 	MAC_CHECK( eth->on_state_changed( eth, ETH_STATE_LLINIT, NULL ) == ESP_OK, "lowlevel init failed", out, ESP_FAIL );

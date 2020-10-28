@@ -1,6 +1,4 @@
 
-#include <stdio.h>
-
 #include "w5100.h"
 #include "w5100_socket.h"
 

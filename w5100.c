@@ -8,7 +8,7 @@
 #define W_PCK( address, data ) ( __builtin_bswap32( ( 0xF0000000 | ( address ) << 8 | ( data ) ) ) )
 #define R_PCK( address )	   ( __builtin_bswap32( ( 0x0F000000 | ( address ) << 8 ) ) )
 
-void iinchip_init( uint8_t *mac_addr )
+void iinchip_init( void )
 {
 	w5100_ll_hw_reset();
 	IINCHIP_WRITE( MR0, MR_RST );
@@ -16,18 +16,15 @@ void iinchip_init( uint8_t *mac_addr )
 	while ( IINCHIP_READ( MR0 ) )
 		;
 
-	wiz_write_buf( SHAR0, mac_addr, 6 );
 	IINCHIP_WRITE( TMSR, 3 );
 	IINCHIP_WRITE( RMSR, 3 );
 }
 
-uint8_t IINCHIP_WRITE( uint16_t addr, uint8_t data )
+void IINCHIP_WRITE( uint16_t addr, uint8_t data )
 {
 	uint32_t tx = W_PCK( addr, data );
 
 	w5100_spi_op( tx, NULL );
-
-	return 1;
 }
 
 uint8_t IINCHIP_READ( uint16_t addr )
@@ -100,7 +97,6 @@ void send_data_processing( uint8_t *data, uint16_t len )
 
 void read_data( uint16_t src_addr, uint8_t *dst, uint16_t len )
 {
-	uint16_t size;
 	uint16_t src_mask = src_addr & RMASK;
 	uint16_t real_src_addr = RBUFBASEADDRESS + src_mask;
 
@@ -108,7 +104,7 @@ void read_data( uint16_t src_addr, uint8_t *dst, uint16_t len )
 		wiz_read_buf( real_src_addr, dst, len );
 	else
 	{
-		size = RSIZE - src_mask;
+		uint16_t size = RSIZE - src_mask;
 		wiz_read_buf( real_src_addr, dst, size );
 		dst += size;
 		size = len - size;
