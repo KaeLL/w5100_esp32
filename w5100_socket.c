@@ -56,8 +56,8 @@ uint16_t w5100_recv( uint8_t **buf )
 	ptr += 2;
 	data_len = __builtin_bswap16( data_len ) - 2;
 
-	*buf = malloc( data_len );
-	assert( *buf );
+	if ( !( *buf = malloc( data_len ) ) )
+		return 0;
 
 	read_data( ptr, *buf, data_len );
 	write_uint16_reg( S0_RX_RD0, ptr + data_len );

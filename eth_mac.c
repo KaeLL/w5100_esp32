@@ -116,10 +116,16 @@ static void emac_w5100_task( void *arg )
 			// read interrupt status and check if data arrived
 			while ( getS0_IR() & S0_IR_RECV )
 			{
-				emac->parent.receive( &emac->parent, ( uint8_t * )&buffer, &length );
+				ESP_ERROR_CHECK( emac->parent.receive( &emac->parent, ( uint8_t * )&buffer, &length ) );
 				if ( length )
+				{
 					/* pass the buffer to stack (e.g. TCP/IP layer) */
-					ESP_ERROR_CHECK( emac->eth->stack_input( emac->eth, buffer, length ) );
+					if ( ESP_OK != emac->eth->stack_input( emac->eth, buffer, length ) )
+					{
+						ESP_LOGE( TAG, "Failed to deliver eth data to layer3" );
+						free( buffer );
+					}
+				}
 				else
 					ESP_LOGE( TAG, "LENGTH = 0" );
 			}
@@ -196,7 +202,7 @@ static esp_err_t emac_w5100_receive( esp_eth_mac_t *mac, uint8_t *buf, uint32_t 
 	ESP_LOGD( TAG, "buf = %p\tlength = %" PRIu32, buf, *length );
 	ESP_LOG_BUFFER_HEXDUMP( __func__, buf, *length, ESP_LOG_DEBUG );
 #endif
-	return ESP_OK;
+	return *length ? ESP_OK : ESP_FAIL;
 }
 
 static esp_err_t emac_w5100_init( esp_eth_mac_t *mac )
