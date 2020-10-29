@@ -50,16 +50,27 @@ uint16_t w5100_send( uint8_t *buf, uint16_t len )
 
 uint16_t w5100_recv( uint8_t **buf )
 {
-	uint16_t data_len, ptr = read_uint16_reg( S0_RX_RD0 );
+	uint16_t data_len, data_len_aux, ptr = read_uint16_reg( S0_RX_RD0 );
 
-	read_data( ptr, ( uint8_t * )&data_len, 2 );
-	ptr += 2;
-	data_len = __builtin_bswap16( data_len ) - 2;
+	while ( 1 )
+	{
+		wiz_read_buf( S0_RX_RSR0, &data_len, 2 );
+		wiz_read_buf( S0_RX_RSR0, &data_len_aux, 2 );
 
-	*buf = malloc(data_len);
-	assert(*buf);
+		if ( data_len == data_len_aux )
+			break;
+	}
+
+	if ( !data_len )
+		return 0;
+
+	data_len = __builtin_bswap16( data_len );
+
+	*buf = malloc( data_len );
+	assert( *buf );
 
 	read_data( ptr, *buf, data_len );
+
 	write_uint16_reg( S0_RX_RD0, ptr + data_len );
 
 	IINCHIP_WRITE( S0_CR, S0_CR_RECV );
