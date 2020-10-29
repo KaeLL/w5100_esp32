@@ -17,12 +17,6 @@ menu "W5100 configurations"
             help
                 Enable this option to hexdump everything received from the chip
                 by the EMAC.
-
-        config W5100_DEBUG_RX_HEADER
-            bool "RX header"
-            help
-                Enable this to show the value of the 2 byte header that indicates
-                the size of the packet to be read from the chip.
     endmenu
 
     config W5100_SPI_EN_MANUAL

@@ -1,11 +1,11 @@
 
 #include "sdkconfig.h"
 
+#include "freertos/FreeRTOS.h"
 #if CONFIG_W5100_SPI_LOCK
-#	include "freertos/FreeRTOS.h"
-#	include "freertos/task.h"
 #	include "freertos/semphr.h"
 #endif
+#include "freertos/task.h"
 #if CONFIG_W5100_SPI_EN_MANUAL
 #	include "driver/gpio.h"
 #endif

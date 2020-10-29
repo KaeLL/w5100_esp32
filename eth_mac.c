@@ -116,7 +116,7 @@ static void emac_w5100_task( void *arg )
 			// read interrupt status and check if data arrived
 			while ( getS0_IR() & S0_IR_RECV )
 			{
-				emac->parent.receive( &emac->parent, (uint8_t *)&buffer, &length );
+				emac->parent.receive( &emac->parent, ( uint8_t * )&buffer, &length );
 				if ( length )
 					/* pass the buffer to stack (e.g. TCP/IP layer) */
 					ESP_ERROR_CHECK( emac->eth->stack_input( emac->eth, buffer, length ) );
@@ -191,7 +191,7 @@ static esp_err_t emac_w5100_transmit( esp_eth_mac_t *mac, uint8_t *buf, uint32_t
 
 static esp_err_t emac_w5100_receive( esp_eth_mac_t *mac, uint8_t *buf, uint32_t *length )
 {
-	*length = w5100_recv( (uint8_t **)buf );
+	*length = w5100_recv( ( uint8_t ** )buf );
 #if CONFIG_W5100_DEBUG_RX
 	ESP_LOGD( TAG, "buf = %p\tlength = %" PRIu32, buf, *length );
 	ESP_LOG_BUFFER_HEXDUMP( __func__, buf, *length, ESP_LOG_DEBUG );
@@ -205,6 +205,7 @@ static esp_err_t emac_w5100_init( esp_eth_mac_t *mac )
 	emac_w5100_t *emac = __containerof( mac, emac_w5100_t, parent );
 	esp_eth_mediator_t *eth = emac->eth;
 
+	ESP_ERROR_CHECK( esp_read_mac( emac->addr, ESP_MAC_ETH ) );
 	iinchip_init();
 	w5100_socket( false );
 
