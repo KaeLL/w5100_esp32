@@ -56,9 +56,6 @@
 #define SOCK_MACRAW		 0x42 /**< mac raw mode socket */
 #define SOCK_PPPOE		 0x5F /**< pppoe socket */
 
-#define getS0_TX_FSR() read_uint16_reg( S0_TX_FSR0 )
-#define getS0_RX_RSR() read_uint16_reg( S0_RX_RSR0 )
-
 #define SMASK			0x1FFF /**< Variable for Tx buffer MASK in each channel */
 #define RMASK			0x1FFF /**< Variable for Rx buffer MASK in each channel */
 #define SSIZE			0x2000 /**< Max Tx buffer size by each channel */
@@ -76,6 +73,7 @@ void wiz_write_buf( uint16_t addr, uint8_t *buf, uint16_t len );
 uint16_t read_uint16_reg( uint16_t addr );
 void write_uint16_reg( uint16_t addr, uint16_t data );
 
+uint16_t getS0_XX_XSR( uint16_t addr );
 uint8_t getS0_IR( void );
 
 void send_data_processing( uint8_t *data, uint16_t len );

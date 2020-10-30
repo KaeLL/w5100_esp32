@@ -62,6 +62,17 @@ void write_uint16_reg( uint16_t addr, uint16_t data )
 	wiz_write_buf( addr, ( uint8_t * )&( uint16_t ){ __builtin_bswap16( data ) }, 2 );
 }
 
+uint16_t getS0_XX_XSR( uint16_t addr )
+{
+	uint16_t first_read, second_read;
+
+	do
+		wiz_read_buf( addr, ( uint8_t * )&first_read, 2 ), wiz_read_buf( addr, ( uint8_t * )&second_read, 2 );
+	while ( first_read != second_read );
+
+	return __builtin_bswap16( first_read );
+}
+
 uint8_t getS0_IR( void )
 {
 	uint8_t ir_reg;

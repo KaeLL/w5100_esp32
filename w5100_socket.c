@@ -30,7 +30,7 @@ void w5100_close( void )
 
 uint16_t w5100_send( uint8_t *buf, uint16_t len )
 {
-	while ( len > getS0_TX_FSR() )
+	while ( len > getS0_XX_XSR( S0_TX_FSR0 ) )
 		;
 
 	send_data_processing( buf, len );
@@ -50,7 +50,7 @@ uint16_t w5100_send( uint8_t *buf, uint16_t len )
 
 uint16_t w5100_recv( uint8_t **buf )
 {
-	uint16_t data_len, ptr = read_uint16_reg( S0_RX_RD0 );
+	uint16_t data_len, ptr = getS0_XX_XSR( S0_RX_RD0 );
 
 	read_data( ptr, ( uint8_t * )&data_len, 2 );
 	ptr += 2;
