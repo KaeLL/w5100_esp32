@@ -2,14 +2,18 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "w5100_debug.h"
 #include "w5100.h"
 #include "w5100_ll.h"
 
 #define W_PCK( address, data ) ( __builtin_bswap32( ( 0xF0000000 | ( address ) << 8 | ( data ) ) ) )
 #define R_PCK( address )	   ( __builtin_bswap32( ( 0x0F000000 | ( address ) << 8 ) ) )
 
+tag_def( "w5100" );
+
 void iinchip_init( void )
 {
+	f_entry();
 	w5100_ll_hw_reset();
 	IINCHIP_WRITE( MR0, MR_RST );
 
@@ -18,6 +22,7 @@ void iinchip_init( void )
 
 	IINCHIP_WRITE( TMSR, 3 );
 	IINCHIP_WRITE( RMSR, 3 );
+	f_exit();
 }
 
 void IINCHIP_WRITE( uint16_t addr, uint8_t data )
@@ -64,11 +69,13 @@ void write_uint16_reg( uint16_t addr, uint16_t data )
 
 uint16_t getS0_XX_XSR( uint16_t addr )
 {
+	f_entry();
 	uint16_t first_read, second_read;
 
 	do
 		wiz_read_buf( addr, ( uint8_t * )&first_read, 2 ), wiz_read_buf( addr, ( uint8_t * )&second_read, 2 );
 	while ( first_read != second_read );
+	f_exit();
 
 	return __builtin_bswap16( first_read );
 }
