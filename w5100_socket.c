@@ -26,12 +26,16 @@ void w5100_socket( bool enable_mac_filter )
 void w5100_close( void )
 {
 	f_entry();
-	IINCHIP_WRITE( S0_CR, S0_CR_CLOSE );
+	do
+		IINCHIP_WRITE( S0_CR, S0_CR_CLOSE );
+	while ( IINCHIP_READ( S0_CR ) );
 
-	while ( IINCHIP_READ( S0_CR ) )
-		;
+	ESP_LOGV( TAG, "Socket closed" );
 
-	IINCHIP_WRITE( S0_IR, 0xFF );
+	do
+		IINCHIP_WRITE( S0_IR, 0xFF );
+	while ( !IINCHIP_READ( S0_IR ) );
+
 	f_exit();
 }
 

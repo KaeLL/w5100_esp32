@@ -20,8 +20,8 @@ void iinchip_init( void )
 	while ( IINCHIP_READ( MR0 ) )
 		;
 
-	IINCHIP_WRITE( TMSR, 3 );
 	IINCHIP_WRITE( RMSR, 3 );
+	IINCHIP_WRITE( TMSR, 3 );
 	f_exit();
 }
 
