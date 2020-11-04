@@ -30,8 +30,6 @@ void w5100_close( void )
 		IINCHIP_WRITE( S0_CR, S0_CR_CLOSE );
 	while ( IINCHIP_READ( S0_CR ) );
 
-	ESP_LOGV( TAG, "Socket closed" );
-
 	do
 		IINCHIP_WRITE( S0_IR, 0xFF );
 	while ( IINCHIP_READ( S0_IR ) );
