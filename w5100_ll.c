@@ -47,6 +47,7 @@ void w5100_ll_hw_reset( void )
 {
 	f_entry();
 	ESP_ERROR_CHECK( gpio_set_direction( CONFIG_W5100_RESET_GPIO, GPIO_MODE_OUTPUT ) );
+	ESP_ERROR_CHECK( gpio_set_level( CONFIG_W5100_RESET_GPIO, 1 ) );
 	ESP_ERROR_CHECK( gpio_set_level( CONFIG_W5100_RESET_GPIO, 0 ) );
 	vTaskDelay( 1 );
 	ESP_ERROR_CHECK( gpio_set_level( CONFIG_W5100_RESET_GPIO, 1 ) );
