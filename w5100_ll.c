@@ -46,11 +46,10 @@ void IRAM_ATTR w5100_SPI_En_deassert( spi_transaction_t *trans )
 void w5100_ll_hw_reset( void )
 {
 	f_entry();
-	ESP_ERROR_CHECK( gpio_set_direction( CONFIG_W5100_RESET_GPIO, GPIO_MODE_OUTPUT ) );
+	// /RESET is inverted in my board
 	ESP_ERROR_CHECK( gpio_set_level( CONFIG_W5100_RESET_GPIO, 1 ) );
-	ESP_ERROR_CHECK( gpio_set_level( CONFIG_W5100_RESET_GPIO, 0 ) );
 	vTaskDelay( 1 );
-	ESP_ERROR_CHECK( gpio_set_level( CONFIG_W5100_RESET_GPIO, 1 ) );
+	ESP_ERROR_CHECK( gpio_set_level( CONFIG_W5100_RESET_GPIO, 0 ) );
 	f_exit();
 }
 
@@ -68,8 +67,17 @@ void w5100_spi_mtx_set( void *spi_mtx )
 void w5100_spi_init( void )
 {
 	f_entry();
+	ESP_ERROR_CHECK( gpio_config( &( const gpio_config_t ){ BIT64( CONFIG_W5100_RESET_GPIO ),
+		GPIO_MODE_OUTPUT,
+		GPIO_PULLUP_DISABLE,
+		GPIO_PULLDOWN_DISABLE,
+		GPIO_INTR_DISABLE } ) );
 #if CONFIG_W5100_SPI_EN_MANUAL
-	ESP_ERROR_CHECK( gpio_set_direction( CONFIG_W5100_SPI_EN_GPIO, GPIO_MODE_OUTPUT ) );
+	ESP_ERROR_CHECK( gpio_config( &( const gpio_config_t ){ BIT64( CONFIG_W5100_SPI_EN_GPIO ),
+		GPIO_MODE_OUTPUT,
+		GPIO_PULLUP_DISABLE,
+		GPIO_PULLDOWN_DISABLE,
+		GPIO_INTR_DISABLE } ) );
 #endif
 #if CONFIG_W5100_SPI_LOCK
 	if ( user_provided_mutex )
