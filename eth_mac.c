@@ -10,7 +10,7 @@
 #include "esp_log.h"
 
 #include "eth_main.h"
-#include "w5100_debug.h"
+
 #include "w5100.h"
 #include "w5100_ll.h"
 #include "w5100_socket.h"
@@ -43,79 +43,64 @@ static const char *TAG = "w5100_eth_mac";
 
 static esp_err_t emac_w5100_write_phy_reg( esp_eth_mac_t *mac, uint32_t phy_addr, uint32_t phy_reg, uint32_t reg_value )
 {
-	f_entry();
-	f_exit();
 	return ESP_OK;
 }
 
 static esp_err_t emac_w5100_read_phy_reg( esp_eth_mac_t *mac, uint32_t phy_addr, uint32_t phy_reg, uint32_t *reg_value )
 {
-	f_entry();
-	f_exit();
 	return ESP_OK;
 }
 
 static esp_err_t emac_w5100_set_mediator( esp_eth_mac_t *mac, esp_eth_mediator_t *eth )
 {
-	f_entry();
 	esp_err_t ret = ESP_OK;
 	MAC_CHECK( eth, "can't set mac's mediator to null", out, ESP_ERR_INVALID_ARG );
 	emac_w5100_t *emac = __containerof( mac, emac_w5100_t, parent );
 	emac->eth = eth;
 out:
-	f_exit();
 	return ret;
 }
 
 static esp_err_t emac_w5100_start( esp_eth_mac_t *mac )
 {
-	f_entry();
 	emac_w5100_t *emac = __containerof( mac, emac_w5100_t, parent );
 	esp_err_t ret
 		= pdTRUE == xTaskNotify( emac->rx_task_hdl, W5100_TSK_GO_ON, eSetValueWithoutOverwrite ) ? ESP_OK : ESP_FAIL;
-	f_exit();
 	return ret;
 }
 
 static esp_err_t emac_w5100_stop( esp_eth_mac_t *mac )
 {
-	f_entry();
 	emac_w5100_t *emac = __containerof( mac, emac_w5100_t, parent );
 	esp_err_t ret
 		= pdTRUE == xTaskNotify( emac->rx_task_hdl, W5100_TSK_HOLD_ON, eSetValueWithoutOverwrite ) ? ESP_OK : ESP_FAIL;
 	w5100_close();
-	f_exit();
 	return ret;
 }
 
 static esp_err_t emac_w5100_set_addr( esp_eth_mac_t *mac, uint8_t *addr )
 {
-	f_entry();
 	esp_err_t ret = ESP_OK;
 	MAC_CHECK( addr, "can't set mac addr to null", out, ESP_ERR_INVALID_ARG );
 	emac_w5100_t *emac = __containerof( mac, emac_w5100_t, parent );
 	memcpy( emac->addr, addr, 6 );
 	wiz_write_buf( SHAR0, addr, 6 );
 out:
-	f_exit();
 	return ret;
 }
 
 static esp_err_t emac_w5100_get_addr( esp_eth_mac_t *mac, uint8_t *addr )
 {
-	f_entry();
 	esp_err_t ret = ESP_OK;
 	MAC_CHECK( addr, "can't set mac addr to null", out, ESP_ERR_INVALID_ARG );
 	emac_w5100_t *emac = __containerof( mac, emac_w5100_t, parent );
 	memcpy( addr, emac->addr, 6 );
 out:
-	f_exit();
 	return ret;
 }
 
 static void emac_w5100_task( void *arg )
 {
-	f_entry();
 	emac_w5100_t *emac = ( emac_w5100_t * )arg;
 	uint8_t *buffer = NULL;
 	uint32_t length = 0, notification_value = 0;
@@ -163,34 +148,26 @@ static void emac_w5100_task( void *arg )
 	}
 
 	ESP_LOGI( TAG, "Deleting emac_w5100_task..." );
-	f_exit();
 	vTaskDelete( NULL );
 }
 
 static esp_err_t emac_w5100_set_link( esp_eth_mac_t *mac, eth_link_t link )
 {
-	f_entry();
-	f_exit();
 	return ESP_OK;
 }
 
 static esp_err_t emac_w5100_set_speed( esp_eth_mac_t *mac, eth_speed_t speed )
 {
-	f_entry();
-	f_exit();
 	return ESP_OK;
 }
 
 static esp_err_t emac_w5100_set_duplex( esp_eth_mac_t *mac, eth_duplex_t duplex )
 {
-	f_entry();
-	f_exit();
 	return ESP_OK;
 }
 
 static esp_err_t emac_w5100_set_promiscuous( esp_eth_mac_t *mac, bool enable )
 {
-	f_entry();
 	uint8_t mode_register = IINCHIP_READ( S0_MR );
 
 	if ( enable && !( mode_register & S0_MR_MF ) )
@@ -198,14 +175,12 @@ static esp_err_t emac_w5100_set_promiscuous( esp_eth_mac_t *mac, bool enable )
 	else if ( !enable && ( mode_register & S0_MR_MF ) )
 		IINCHIP_WRITE( S0_MR, mode_register & ~S0_MR_MF );
 
-	f_exit();
 
 	return ESP_OK;
 }
 
 static esp_err_t emac_w5100_transmit( esp_eth_mac_t *mac, uint8_t *buf, uint32_t length )
 {
-	f_entry();
 #if CONFIG_W5100_DEBUG_TX
 	ESP_LOGD( TAG, "buf = %p\tlength = %" PRIu32, buf, length );
 	ESP_LOG_BUFFER_HEXDUMP( __func__, buf, length, ESP_LOG_DEBUG );
@@ -217,26 +192,22 @@ static esp_err_t emac_w5100_transmit( esp_eth_mac_t *mac, uint8_t *buf, uint32_t
 	}
 
 	w5100_send( buf, ( uint16_t )length );
-	f_exit();
 
 	return ESP_OK;
 }
 
 static esp_err_t emac_w5100_receive( esp_eth_mac_t *mac, uint8_t *buf, uint32_t *length )
 {
-	f_entry();
 	*length = w5100_recv( ( uint8_t ** )buf );
 #if CONFIG_W5100_DEBUG_RX
 	ESP_LOGD( TAG, "buf = %p\tlength = %" PRIu32, buf, *length );
 	ESP_LOG_BUFFER_HEXDUMP( __func__, buf, *length, ESP_LOG_DEBUG );
 #endif
-	f_exit();
 	return *length ? ESP_OK : ESP_FAIL;
 }
 
 static esp_err_t emac_w5100_init( esp_eth_mac_t *mac )
 {
-	f_entry();
 	esp_err_t ret = ESP_OK;
 	emac_w5100_t *emac = __containerof( mac, emac_w5100_t, parent );
 	esp_eth_mediator_t *eth = emac->eth;
@@ -248,41 +219,34 @@ static esp_err_t emac_w5100_init( esp_eth_mac_t *mac )
 	MAC_CHECK( eth->on_state_changed( eth, ETH_STATE_LLINIT, NULL ) == ESP_OK, "lowlevel init failed", out, ESP_FAIL );
 
 	ESP_ERROR_CHECK( mac->start( mac ) );
-	f_exit();
 
 	return ret;
 out:
 	eth->on_state_changed( eth, ETH_STATE_DEINIT, NULL );
-	f_exit();
 
 	return ret;
 }
 
 static esp_err_t emac_w5100_deinit( esp_eth_mac_t *mac )
 {
-	f_entry();
 	emac_w5100_t *emac = __containerof( mac, emac_w5100_t, parent );
 	emac->eth->on_state_changed( emac->eth, ETH_STATE_DEINIT, NULL );
 	esp_err_t ret
 		= pdPASS == xTaskNotify( emac->rx_task_hdl, W5100_TSK_DELETE, eSetValueWithoutOverwrite ) ? ESP_OK : ESP_FAIL;
-	f_exit();
 
 	return ret;
 }
 
 static esp_err_t emac_w5100_del( esp_eth_mac_t *mac )
 {
-	f_entry();
 	emac_w5100_t *emac = __containerof( mac, emac_w5100_t, parent );
 	free( emac );
-	f_exit();
 
 	return ESP_OK;
 }
 
 esp_eth_mac_t *esp_eth_mac_new_w5100( const eth_mac_config_t *mac_config )
 {
-	f_entry();
 	esp_eth_mac_t *ret = NULL;
 	emac_w5100_t *emac = NULL;
 	MAC_CHECK( mac_config, "can't set mac config to null", err, NULL );
@@ -319,7 +283,6 @@ esp_eth_mac_t *esp_eth_mac_new_w5100( const eth_mac_config_t *mac_config )
 #endif
 	);
 	MAC_CHECK( xReturned == pdPASS, "create w5100 task failed", err, NULL );
-	f_exit();
 
 	return &( emac->parent );
 err:
@@ -330,7 +293,6 @@ err:
 
 		free( emac );
 	}
-	f_exit();
 
 	return ret;
 }

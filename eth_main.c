@@ -8,11 +8,10 @@
 #include "driver/gpio.h"
 #include "sdkconfig.h"
 
-#include "w5100_debug.h"
 #include "eth_main.h"
 #include "w5100_ll.h"
 
-tag_def( "eth_example" );
+static const char *TAG = "eth_main";
 
 esp_eth_config_t eth_config;
 esp_netif_t *eth_netif;
@@ -21,7 +20,6 @@ void *eth_netif_glue;
 
 void eth_enable_static_ip( struct eth_static_ip *sip )
 {
-	f_entry();
 	ESP_ERROR_CHECK( !sip );
 	ESP_ERROR_CHECK( !sip->ip.u32 );
 	ESP_ERROR_CHECK( !sip->nm.u32 );
@@ -119,12 +117,10 @@ void eth_enable_static_ip( struct eth_static_ip *sip )
 	ESP_LOGD( TAG, "~~~~~~~~~~~" );
 	ESP_ERROR_CHECK( esp_netif_dhcpc_get_status( eth_netif, &dhcp_status ) );
 	ESP_LOGD( TAG, "DHCP STATUS: %d", dhcp_status );
-	f_exit();
 }
 
 void eth_main( struct eth_ifconfig *cfg )
 {
-	f_entry();
 	eth_netif = esp_netif_new( &( const esp_netif_config_t )ESP_NETIF_DEFAULT_ETH() );
 
 	if ( cfg )
@@ -163,5 +159,4 @@ void eth_main( struct eth_ifconfig *cfg )
 	ESP_ERROR_CHECK( esp_netif_attach( eth_netif, eth_netif_glue ) );
 	/* start Ethernet driver state machine */
 	ESP_ERROR_CHECK( esp_eth_start( eth_handle ) );
-	f_exit();
 }

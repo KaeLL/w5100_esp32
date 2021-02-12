@@ -2,15 +2,11 @@
 #include <assert.h>
 #include <stdlib.h>
 
-#include "w5100_debug.h"
 #include "w5100.h"
 #include "w5100_socket.h"
 
-tag_def( "w5100_socket" );
-
 void w5100_socket( bool enable_mac_filter )
 {
-	f_entry();
 	do
 	{
 		w5100_close();
@@ -20,12 +16,10 @@ void w5100_socket( bool enable_mac_filter )
 		while ( IINCHIP_READ( S0_CR ) )
 			;
 	} while ( IINCHIP_READ( S0_SR ) != SOCK_MACRAW );
-	f_exit();
 }
 
 void w5100_close( void )
 {
-	f_entry();
 	do
 		IINCHIP_WRITE( S0_CR, S0_CR_CLOSE );
 	while ( IINCHIP_READ( S0_CR ) );
@@ -34,12 +28,10 @@ void w5100_close( void )
 		IINCHIP_WRITE( S0_IR, 0xFF );
 	while ( IINCHIP_READ( S0_IR ) );
 
-	f_exit();
 }
 
 uint16_t w5100_send( uint8_t *buf, uint16_t len )
 {
-	f_entry();
 	while ( len > getS0_XX_XSR( S0_TX_FSR0 ) )
 		;
 
@@ -53,14 +45,12 @@ uint16_t w5100_send( uint8_t *buf, uint16_t len )
 	uint8_t ir_reg;
 	while ( !( ( ir_reg = IINCHIP_READ( S0_IR ) ) & S0_IR_SEND_OK ) )
 		;
-	f_exit();
 
 	return len;
 }
 
 uint16_t w5100_recv( uint8_t **buf )
 {
-	f_entry();
 	uint16_t data_len, ptr = read_uint16_reg( S0_RX_RD0 );
 
 	read_data( ptr, ( uint8_t * )&data_len, 2 );
@@ -69,7 +59,6 @@ uint16_t w5100_recv( uint8_t **buf )
 
 	if ( !( *buf = malloc( data_len ) ) )
 	{
-		f_exit();
 		return 0;
 	}
 
@@ -80,7 +69,6 @@ uint16_t w5100_recv( uint8_t **buf )
 
 	while ( IINCHIP_READ( S0_CR ) )
 		;
-	f_exit();
 
 	return data_len;
 }

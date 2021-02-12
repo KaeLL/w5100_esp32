@@ -12,7 +12,6 @@
 #include "esp_attr.h"
 #include "driver/spi_master.h"
 
-#include "w5100_debug.h"
 #include "w5100_ll.h"
 
 #if CONFIG_W5100_POLLING_SPI_TRANS
@@ -20,8 +19,6 @@
 #else
 #	define W5100_TR spi_device_transmit
 #endif
-
-tag_def( "w5100_ll" );
 
 spi_device_handle_t w5100_spi_handle;
 #if CONFIG_W5100_SPI_LOCK
@@ -45,28 +42,23 @@ void IRAM_ATTR w5100_SPI_En_deassert( spi_transaction_t *trans )
 
 void w5100_ll_hw_reset( void )
 {
-	f_entry();
 	// /RESET is inverted in my board
 	ESP_ERROR_CHECK( gpio_set_level( CONFIG_W5100_RESET_GPIO, 1 ) );
 	vTaskDelay( 1 );
 	ESP_ERROR_CHECK( gpio_set_level( CONFIG_W5100_RESET_GPIO, 0 ) );
-	f_exit();
 }
 
 void w5100_spi_mtx_set( void *spi_mtx )
 {
 #if CONFIG_W5100_SPI_LOCK
-	f_entry();
 	ESP_ERROR_CHECK( !spi_mtx );
 	eth_mutex = ( SemaphoreHandle_t )spi_mtx;
 	user_provided_mutex = true;
-	f_exit();
 #endif
 }
 
 void w5100_spi_init( void )
 {
-	f_entry();
 	ESP_ERROR_CHECK( gpio_config( &( const gpio_config_t ){ BIT64( CONFIG_W5100_RESET_GPIO ),
 		GPIO_MODE_OUTPUT,
 		GPIO_PULLUP_DISABLE,
@@ -101,12 +93,10 @@ void w5100_spi_init( void )
 #if CONFIG_W5100_SPI_BUS_ACQUIRE
 	ESP_ERROR_CHECK( spi_device_acquire_bus( w5100_spi_handle, portMAX_DELAY ) );
 #endif
-	f_exit();
 }
 
 void w5100_spi_deinit( void )
 {
-	f_entry();
 #if CONFIG_W5100_SPI_LOCK
 	if ( user_provided_mutex )
 		xSemaphoreTake( eth_mutex, portMAX_DELAY );
@@ -121,7 +111,6 @@ void w5100_spi_deinit( void )
 	else
 		vSemaphoreDelete( eth_mutex );
 #endif
-	f_exit();
 }
 
 void w5100_spi_op( uint32_t tx, uint32_t *rx )
