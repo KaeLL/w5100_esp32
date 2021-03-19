@@ -114,7 +114,7 @@ static void emac_w5100_task( void *arg )
 		if ( notification_value == W5100_TSK_RUN )
 		{
 			// read interrupt status and check if data arrived
-			while ( getS0_IR() & S0_IR_RECV )
+			if ( getS0_IR() & S0_IR_RECV )
 			{
 				ESP_ERROR_CHECK( emac->parent.receive( &emac->parent, ( uint8_t * )&buffer, &length ) );
 				if ( length )
