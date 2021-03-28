@@ -1,0 +1,1 @@
+COMPONENT_PRIV_INCLUDEDIRS := priv_includes

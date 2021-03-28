@@ -10,6 +10,7 @@
 #include "esp_log.h"
 
 #include "eth_main.h"
+#include "eth_if.h"
 
 #include "w5100.h"
 #include "w5100_ll.h"
@@ -37,6 +38,7 @@ typedef struct
 	esp_eth_mediator_t *eth;
 	TaskHandle_t rx_task_hdl;
 	uint8_t addr[ 6 ];
+	_Bool isPromiscousModeEnabled;
 } emac_w5100_t;
 
 static const char *TAG = "w5100_eth_mac";
@@ -74,7 +76,7 @@ static esp_err_t emac_w5100_stop( esp_eth_mac_t *mac )
 	emac_w5100_t *emac = __containerof( mac, emac_w5100_t, parent );
 	esp_err_t ret
 		= pdTRUE == xTaskNotify( emac->rx_task_hdl, W5100_TSK_HOLD_ON, eSetValueWithoutOverwrite ) ? ESP_OK : ESP_FAIL;
-	w5100_close();
+	w5100_socket_close();
 	return ret;
 }
 
@@ -84,7 +86,6 @@ static esp_err_t emac_w5100_set_addr( esp_eth_mac_t *mac, uint8_t *addr )
 	MAC_CHECK( addr, "can't set mac addr to null", out, ESP_ERR_INVALID_ARG );
 	emac_w5100_t *emac = __containerof( mac, emac_w5100_t, parent );
 	memcpy( emac->addr, addr, 6 );
-	wiz_write_buf( SHAR0, addr, 6 );
 out:
 	return ret;
 }
@@ -114,7 +115,7 @@ static void emac_w5100_task( void *arg )
 		if ( notification_value == W5100_TSK_RUN )
 		{
 			// read interrupt status and check if data arrived
-			if ( getS0_IR() & S0_IR_RECV )
+			if ( w5100_wasDataReceiceved() )
 			{
 				ESP_ERROR_CHECK( emac->parent.receive( &emac->parent, ( uint8_t * )&buffer, &length ) );
 				if ( length )
@@ -168,13 +169,18 @@ static esp_err_t emac_w5100_set_duplex( esp_eth_mac_t *mac, eth_duplex_t duplex 
 
 static esp_err_t emac_w5100_set_promiscuous( esp_eth_mac_t *mac, bool enable )
 {
-	uint8_t mode_register = IINCHIP_READ( S0_MR );
+	emac_w5100_t *emac = __containerof( mac, emac_w5100_t, parent );
 
-	if ( enable && !( mode_register & S0_MR_MF ) )
-		IINCHIP_WRITE( S0_MR, mode_register | S0_MR_MF );
-	else if ( !enable && ( mode_register & S0_MR_MF ) )
-		IINCHIP_WRITE( S0_MR, mode_register & ~S0_MR_MF );
-
+	if ( enable && !emac->isPromiscousModeEnabled )
+	{
+		w5100_enablePromiscuousMode();
+		emac->isPromiscousModeEnabled = false;
+	}
+	else if ( !enable && emac->isPromiscousModeEnabled )
+	{
+		w5100_disablePromiscuousMode();
+		emac->isPromiscousModeEnabled = true;
+	}
 
 	return ESP_OK;
 }
@@ -185,20 +191,14 @@ static esp_err_t emac_w5100_transmit( esp_eth_mac_t *mac, uint8_t *buf, uint32_t
 	ESP_LOGD( TAG, "buf = %p\tlength = %" PRIu32, buf, length );
 	ESP_LOG_BUFFER_HEXDUMP( __func__, buf, length, ESP_LOG_DEBUG );
 #endif
-	while ( length > SSIZE )
-	{
-		w5100_send( buf, SSIZE );
-		length -= SSIZE;
-	}
-
-	w5100_send( buf, ( uint16_t )length );
+	w5100_socket_send( buf, ( uint16_t )length );
 
 	return ESP_OK;
 }
 
 static esp_err_t emac_w5100_receive( esp_eth_mac_t *mac, uint8_t *buf, uint32_t *length )
 {
-	*length = w5100_recv( ( uint8_t ** )buf );
+	*length = w5100_socket_recv( ( uint8_t * *const ) buf );
 #if CONFIG_W5100_DEBUG_RX
 	ESP_LOGD( TAG, "buf = %p\tlength = %" PRIu32, buf, *length );
 	ESP_LOG_BUFFER_HEXDUMP( __func__, buf, *length, ESP_LOG_DEBUG );
@@ -212,9 +212,8 @@ static esp_err_t emac_w5100_init( esp_eth_mac_t *mac )
 	emac_w5100_t *emac = __containerof( mac, emac_w5100_t, parent );
 	esp_eth_mediator_t *eth = emac->eth;
 
-	ESP_ERROR_CHECK( esp_read_mac( emac->addr, ESP_MAC_ETH ) );
-	iinchip_init();
-	w5100_socket( false );
+	w5100_init();
+	w5100_socket_open( false );
 
 	MAC_CHECK( eth->on_state_changed( eth, ETH_STATE_LLINIT, NULL ) == ESP_OK, "lowlevel init failed", out, ESP_FAIL );
 
@@ -245,7 +244,7 @@ static esp_err_t emac_w5100_del( esp_eth_mac_t *mac )
 	return ESP_OK;
 }
 
-esp_eth_mac_t *esp_eth_mac_new_w5100( const eth_mac_config_t *mac_config )
+esp_eth_mac_t *esp_eth_mac_new_w5100( const eth_mac_config_t *const mac_config )
 {
 	esp_eth_mac_t *ret = NULL;
 	emac_w5100_t *emac = NULL;

@@ -2,14 +2,16 @@
 #include <assert.h>
 #include <stdlib.h>
 
-#include "w5100.h"
+#include "sys/param.h"
+
+#include "w5100_internal.h"
 #include "w5100_socket.h"
 
-void w5100_socket( bool enable_mac_filter )
+void w5100_socket_open( const _Bool enable_mac_filter )
 {
 	do
 	{
-		w5100_close();
+		w5100_socket_close();
 		IINCHIP_WRITE( S0_MR, enable_mac_filter ? S0_MR_MACRAW | S0_MR_MF : S0_MR_MACRAW );
 		IINCHIP_WRITE( S0_CR, S0_CR_OPEN );
 
@@ -18,7 +20,7 @@ void w5100_socket( bool enable_mac_filter )
 	} while ( IINCHIP_READ( S0_SR ) != SOCK_MACRAW );
 }
 
-void w5100_close( void )
+void w5100_socket_close( void )
 {
 	do
 		IINCHIP_WRITE( S0_CR, S0_CR_CLOSE );
@@ -27,29 +29,38 @@ void w5100_close( void )
 	do
 		IINCHIP_WRITE( S0_IR, 0xFF );
 	while ( IINCHIP_READ( S0_IR ) );
-
 }
 
-uint16_t w5100_send( uint8_t *buf, uint16_t len )
+uint16_t w5100_socket_send( const uint8_t *const buf, const uint16_t len )
 {
-	while ( len > getS0_XX_XSR( S0_TX_FSR0 ) )
-		;
+	uint16_t data_remaining = len;
 
-	send_data_processing( buf, len );
+	while ( data_remaining )
+	{
+		uint16_t avail_sz = getS0_XX_XSR( S0_TX_FSR0 );
 
-	IINCHIP_WRITE( S0_CR, S0_CR_SEND );
+		if ( !avail_sz )
+			continue;
 
-	while ( IINCHIP_READ( S0_CR ) )
-		;
+		uint16_t sz_to_be_sent = MIN( avail_sz, data_remaining );
 
-	uint8_t ir_reg;
-	while ( !( ( ir_reg = IINCHIP_READ( S0_IR ) ) & S0_IR_SEND_OK ) )
-		;
+		send_data_processing( buf + len - data_remaining, sz_to_be_sent );
+
+		IINCHIP_WRITE( S0_CR, S0_CR_SEND );
+
+		while ( IINCHIP_READ( S0_CR ) )
+			;
+
+		while ( !( IINCHIP_READ( S0_IR ) & S0_IR_SEND_OK ) )
+			;
+
+		data_remaining -= sz_to_be_sent;
+	}
 
 	return len;
 }
 
-uint16_t w5100_recv( uint8_t **buf )
+uint16_t w5100_socket_recv( uint8_t **const buf )
 {
 	uint16_t data_len, ptr = read_uint16_reg( S0_RX_RD0 );
 

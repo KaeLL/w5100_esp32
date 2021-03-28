@@ -7,6 +7,7 @@
 #include "w5100.h"
 #include "w5100_ll.h"
 #include "eth_main.h"
+#include "eth_if.h"
 
 static const char *TAG = "eth_phy";
 
@@ -101,7 +102,7 @@ static esp_err_t ephy_w5100_deinit( esp_eth_phy_t *phy )
 	return ESP_OK;
 }
 
-esp_eth_phy_t *esp_eth_phy_new_w5100( const eth_phy_config_t *config )
+esp_eth_phy_t *esp_eth_phy_new_w5100( const eth_phy_config_t *const phy_config )
 {
 	phy_w5100_t *w5100 = calloc( 1, sizeof( phy_w5100_t ) );
 	PHY_CHECK( w5100, "calloc w5100 failed", err );

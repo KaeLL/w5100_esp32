@@ -63,20 +63,20 @@
 #define SBUFBASEADDRESS 0x4000 /**< Tx buffer base address by each channel */
 #define RBUFBASEADDRESS 0x6000 /**< Rx buffer base address by each channel */
 
-void iinchip_init( void );
+void w5100_internal_init( void );
 
-uint8_t IINCHIP_READ( uint16_t addr );
-void IINCHIP_WRITE( uint16_t addr, uint8_t data );
-void wiz_read_buf( uint16_t addr, uint8_t *buf, uint16_t len );
-void wiz_write_buf( uint16_t addr, uint8_t *buf, uint16_t len );
+uint8_t IINCHIP_READ( const uint16_t addr );
+void IINCHIP_WRITE( const uint16_t addr, const uint8_t data );
+void wiz_read_buf( const uint16_t addr, uint8_t *const buf, const uint16_t len );
+void wiz_write_buf( const uint16_t addr, const uint8_t *const buf, const uint16_t len );
 
-uint16_t read_uint16_reg( uint16_t addr );
-void write_uint16_reg( uint16_t addr, uint16_t data );
+uint16_t read_uint16_reg( const uint16_t addr );
+void write_uint16_reg( const uint16_t addr, const uint16_t data );
 
-uint16_t getS0_XX_XSR( uint16_t addr );
+uint16_t getS0_XX_XSR( const uint16_t addr );
 uint8_t getS0_IR( void );
 
-void send_data_processing( uint8_t *data, uint16_t len );
-void read_data( uint16_t src_addr, uint8_t *dst, uint16_t len );
+void send_data_processing( const uint8_t *data, const uint16_t len );
+void read_data( const uint16_t src_addr, uint8_t *const dst, const uint16_t len );
 
 #endif

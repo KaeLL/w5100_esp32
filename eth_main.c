@@ -8,8 +8,9 @@
 #include "driver/gpio.h"
 #include "sdkconfig.h"
 
-#include "eth_main.h"
 #include "w5100_ll.h"
+#include "eth_if.h"
+#include "eth_main.h"
 
 static const char *TAG = "eth_main";
 
@@ -18,7 +19,7 @@ esp_netif_t *eth_netif;
 esp_eth_handle_t eth_handle;
 void *eth_netif_glue;
 
-void eth_enable_static_ip( struct eth_static_ip *sip )
+void eth_enable_static_ip( const struct eth_static_ip *const sip )
 {
 	ESP_ERROR_CHECK( !sip );
 	ESP_ERROR_CHECK( !sip->ip.u32 );
@@ -119,7 +120,7 @@ void eth_enable_static_ip( struct eth_static_ip *sip )
 	ESP_LOGD( TAG, "DHCP STATUS: %d", dhcp_status );
 }
 
-void eth_main( struct eth_ifconfig *cfg )
+void eth_main( const struct eth_ifconfig *const cfg )
 {
 	eth_netif = esp_netif_new( &( const esp_netif_config_t )ESP_NETIF_DEFAULT_ETH() );
 
@@ -128,8 +129,11 @@ void eth_main( struct eth_ifconfig *cfg )
 		if ( *cfg->hostname )
 			ESP_ERROR_CHECK( esp_netif_set_hostname( eth_netif, cfg->hostname ) );
 
-		if ( cfg->sip.ip.u32 )
-			eth_enable_static_ip( &cfg->sip );
+		if ( cfg->sip )
+		{
+			if ( cfg->sip->ip.u32 )
+				eth_enable_static_ip( cfg->sip );
+		}
 	}
 
 	// Set default handlers to process TCP/IP stuffs
@@ -140,17 +144,13 @@ void eth_main( struct eth_ifconfig *cfg )
 	mac_config.smi_mdc_gpio_num = -1; // w5100 doesn't have SMI interface
 	mac_config.smi_mdio_gpio_num = -1;
 	esp_eth_mac_t *mac = esp_eth_mac_new_w5100( &mac_config );
-
-	eth_phy_config_t phy_config = ETH_PHY_DEFAULT_CONFIG();
-	phy_config.autonego_timeout_ms = 0; // w5100 doesn't support auto-negotiation
-	phy_config.reset_gpio_num = -1;		// w5100 doesn't have a pin to reset internal PHY
-	esp_eth_phy_t *phy = esp_eth_phy_new_w5100( &phy_config );
+	esp_eth_phy_t *phy = esp_eth_phy_new_w5100( NULL ); // No PHY pins connected
 
 	esp_eth_config_t eth_cfg = ETH_DEFAULT_CONFIG( mac, phy );
 	eth_config = eth_cfg;
 	// eth_config.check_link_period_ms = UINT32_MAX;
 
-	w5100_spi_init();
+	w5100_spi_init( cfg->w5100_cfg );
 
 	ESP_ERROR_CHECK( esp_eth_driver_install( &eth_config, &eth_handle ) );
 

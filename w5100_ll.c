@@ -14,19 +14,21 @@
 
 #include "w5100_ll.h"
 
+typedef struct
+{
+	spi_device_handle_t w5100_spi_handle;
+	SemaphoreHandle_t eth_mutex;
+	bool user_provided_mutex;
+} w5100_ll_t;
+
+w5100_ll_t *w5100_ll_data;
+DMA_ATTR uint32_t tx_tr, rx_tr;
+
 #if CONFIG_W5100_POLLING_SPI_TRANS
 #	define W5100_TR spi_device_polling_transmit
 #else
 #	define W5100_TR spi_device_transmit
 #endif
-
-spi_device_handle_t w5100_spi_handle;
-#if CONFIG_W5100_SPI_LOCK
-SemaphoreHandle_t eth_mutex;
-bool user_provided_mutex;
-#endif
-
-DMA_ATTR uint32_t tx_tr, rx_tr;
 
 #if CONFIG_W5100_SPI_EN_MANUAL
 void IRAM_ATTR w5100_SPI_EN_assert( spi_transaction_t *trans )
@@ -48,16 +50,7 @@ void w5100_ll_hw_reset( void )
 	ESP_ERROR_CHECK( gpio_set_level( CONFIG_W5100_RESET_GPIO, 0 ) );
 }
 
-void w5100_spi_mtx_set( void *spi_mtx )
-{
-#if CONFIG_W5100_SPI_LOCK
-	ESP_ERROR_CHECK( !spi_mtx );
-	eth_mutex = ( SemaphoreHandle_t )spi_mtx;
-	user_provided_mutex = true;
-#endif
-}
-
-void w5100_spi_init( void )
+void w5100_spi_init( const struct w5100_config_t *const w5100_cfg )
 {
 	ESP_ERROR_CHECK( gpio_config( &( const gpio_config_t ){ BIT64( CONFIG_W5100_RESET_GPIO ),
 		GPIO_MODE_OUTPUT,
@@ -71,11 +64,16 @@ void w5100_spi_init( void )
 		GPIO_PULLDOWN_DISABLE,
 		GPIO_INTR_DISABLE } ) );
 #endif
+	w5100_ll_data = calloc( 1, sizeof( w5100_ll_t ) );
+	ESP_ERROR_CHECK( !w5100_ll_data );
 #if CONFIG_W5100_SPI_LOCK
-	if ( user_provided_mutex )
-		xSemaphoreTake( eth_mutex, portMAX_DELAY );
+	if ( w5100_cfg && w5100_cfg->user_mutex )
+		w5100_ll_data->eth_mutex = ( SemaphoreHandle_t )w5100_cfg->user_mutex,
+		w5100_ll_data->user_provided_mutex = true;
 	else
-		ESP_ERROR_CHECK( !( eth_mutex = xSemaphoreCreateMutex() ) );
+		ESP_ERROR_CHECK( !( w5100_ll_data->eth_mutex = xSemaphoreCreateMutex() ) );
+
+	ESP_ERROR_CHECK( pdFALSE == xSemaphoreTake( w5100_ll_data->eth_mutex, portMAX_DELAY ) );
 #endif
 	ESP_ERROR_CHECK( spi_bus_add_device(
 		CONFIG_W5100_SPI_BUS - 1,
@@ -85,45 +83,50 @@ void w5100_spi_init( void )
 			.pre_cb = w5100_SPI_EN_assert, .post_cb = w5100_SPI_En_deassert
 #endif
 		},
-		&w5100_spi_handle ) );
-#if CONFIG_W5100_SPI_LOCK
-	if ( user_provided_mutex )
-		xSemaphoreGive( eth_mutex );
-#endif
+		&w5100_ll_data->w5100_spi_handle ) );
 #if CONFIG_W5100_SPI_BUS_ACQUIRE
-	ESP_ERROR_CHECK( spi_device_acquire_bus( w5100_spi_handle, portMAX_DELAY ) );
+	ESP_ERROR_CHECK( spi_device_acquire_bus( w5100_ll_data->w5100_spi_handle, portMAX_DELAY ) );
+#endif
+#if CONFIG_W5100_SPI_LOCK
+	ESP_ERROR_CHECK( pdFALSE == xSemaphoreGive( w5100_ll_data->eth_mutex ) );
 #endif
 }
 
 void w5100_spi_deinit( void )
 {
 #if CONFIG_W5100_SPI_LOCK
-	if ( user_provided_mutex )
-		xSemaphoreTake( eth_mutex, portMAX_DELAY );
+	ESP_ERROR_CHECK( pdFALSE == xSemaphoreTake( w5100_ll_data->eth_mutex, portMAX_DELAY ) );
 #endif
 #if CONFIG_W5100_SPI_BUS_ACQUIRE
-	spi_device_release_bus( w5100_spi_handle );
+	spi_device_release_bus( w5100_ll_data->w5100_spi_handle );
 #endif
-	ESP_ERROR_CHECK( spi_bus_remove_device( w5100_spi_handle ) );
+	ESP_ERROR_CHECK( spi_bus_remove_device( w5100_ll_data->w5100_spi_handle ) );
 #if CONFIG_W5100_SPI_LOCK
-	if ( user_provided_mutex )
-		xSemaphoreGive( eth_mutex );
-	else
-		vSemaphoreDelete( eth_mutex );
+	xSemaphoreHandle tmp_lock = w5100_ll_data->eth_mutex;
+	bool usr_prov_mtx = w5100_ll_data->user_provided_mutex;
+
+	free( w5100_ll_data );
+	w5100_ll_data = NULL;
+	ESP_ERROR_CHECK( pdFALSE == xSemaphoreGive( tmp_lock ) );
+
+	if ( !usr_prov_mtx )
+		vSemaphoreDelete( tmp_lock );
 #endif
 }
 
-void w5100_spi_op( uint32_t tx, uint32_t *rx )
+void w5100_spi_op( const uint32_t tx, uint32_t *const rx )
 {
+	if ( !w5100_ll_data )
+		return;
 #if CONFIG_W5100_SPI_LOCK
-	xSemaphoreTake( eth_mutex, portMAX_DELAY );
+	ESP_ERROR_CHECK( pdFALSE == xSemaphoreTake( w5100_ll_data->eth_mutex, portMAX_DELAY ) );
 #endif
 	tx_tr = tx, rx_tr = rx ? *rx : ( uint32_t )NULL;
-	ESP_ERROR_CHECK( W5100_TR( w5100_spi_handle,
+	ESP_ERROR_CHECK( W5100_TR( w5100_ll_data->w5100_spi_handle,
 		&( spi_transaction_t ){ .length = 32, .tx_buffer = &tx_tr, .rx_buffer = &rx_tr } ) );
 	if ( rx )
 		*rx = rx_tr;
 #if CONFIG_W5100_SPI_LOCK
-	xSemaphoreGive( eth_mutex );
+	ESP_ERROR_CHECK( pdFALSE == xSemaphoreGive( w5100_ll_data->eth_mutex ) );
 #endif
 }
