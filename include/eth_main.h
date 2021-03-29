@@ -27,5 +27,3 @@ struct eth_ifconfig
 };
 
 void eth_main( const struct eth_ifconfig *const cfg );
-
-void eth_deinit( void );
