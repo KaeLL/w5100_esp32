@@ -18,9 +18,9 @@ of interrupts for Slave -> Master communication.
 Roadmap:
 - Done:
     - Static IP
+    - De-initialization routines
 
 - Currently being worked:
-    - De-initialization routines
     - Stability improvements, especially SPI-related
 
 - Future:

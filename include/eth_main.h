@@ -26,4 +26,5 @@ struct eth_ifconfig
 	const struct w5100_config_t *const w5100_cfg;
 };
 
-void eth_main( const struct eth_ifconfig *const cfg );
+void eth_init( const struct eth_ifconfig *const cfg );
+void eth_deinit( void );

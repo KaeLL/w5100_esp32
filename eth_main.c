@@ -1,4 +1,6 @@
 
+#include <stdlib.h>
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_netif.h"
@@ -14,10 +16,13 @@
 
 static const char *TAG = "eth_main";
 
-esp_eth_config_t eth_config;
-esp_netif_t *eth_netif;
-esp_eth_handle_t eth_handle;
-void *eth_netif_glue;
+struct
+{
+	esp_eth_config_t eth_config;
+	esp_netif_t *eth_netif;
+	esp_eth_handle_t eth_handle;
+	void *eth_netif_glue;
+} * eth_cfgs;
 
 void eth_enable_static_ip( const struct eth_static_ip *const sip )
 {
@@ -33,121 +38,116 @@ void eth_enable_static_ip( const struct eth_static_ip *const sip )
 	esp_netif_dns_info_t dns_info;
 
 	ESP_LOGD( TAG, "Before disabling DHCP" );
-	ESP_ERROR_CHECK( esp_netif_get_old_ip_info( eth_netif, &ip_info ) );
+	ESP_ERROR_CHECK( esp_netif_get_old_ip_info( eth_cfgs->eth_netif, &ip_info ) );
 	ESP_LOGD( TAG, "OLD_IP_INFO" );
 	ESP_LOGD( TAG, "~~~~~~~~~~~" );
 	ESP_LOGD( TAG, "ETHIP: " IPSTR, IP2STR( &ip_info.ip ) );
 	ESP_LOGD( TAG, "ETHMASK: " IPSTR, IP2STR( &ip_info.netmask ) );
 	ESP_LOGD( TAG, "ETHGW: " IPSTR, IP2STR( &ip_info.gw ) );
 	ESP_LOGD( TAG, "~~~~~~~~~~~" );
-	ESP_ERROR_CHECK( esp_netif_get_ip_info( eth_netif, &ip_info ) );
+	ESP_ERROR_CHECK( esp_netif_get_ip_info( eth_cfgs->eth_netif, &ip_info ) );
 	ESP_LOGD( TAG, "IP_INFO" );
 	ESP_LOGD( TAG, "~~~~~~~~~~~" );
 	ESP_LOGD( TAG, "ETHIP: " IPSTR, IP2STR( &ip_info.ip ) );
 	ESP_LOGD( TAG, "ETHMASK: " IPSTR, IP2STR( &ip_info.netmask ) );
 	ESP_LOGD( TAG, "ETHGW: " IPSTR, IP2STR( &ip_info.gw ) );
 	ESP_LOGD( TAG, "~~~~~~~~~~~" );
-	ESP_ERROR_CHECK( esp_netif_get_dns_info( eth_netif, ESP_NETIF_DNS_MAIN, &dns_info ) );
+	ESP_ERROR_CHECK( esp_netif_get_dns_info( eth_cfgs->eth_netif, ESP_NETIF_DNS_MAIN, &dns_info ) );
 	ESP_LOGD( TAG, "MAIN DNS_INFO" );
 	ESP_LOGD( TAG, "~~~~~~~~~~~" );
 	ESP_LOGD( TAG, "DNSIP: " IPSTR, IP2STR( &dns_info.ip.u_addr.ip4 ) );
 	ESP_LOGD( TAG, "~~~~~~~~~~~" );
-	ESP_ERROR_CHECK( esp_netif_get_dns_info( eth_netif, ESP_NETIF_DNS_BACKUP, &dns_info ) );
+	ESP_ERROR_CHECK( esp_netif_get_dns_info( eth_cfgs->eth_netif, ESP_NETIF_DNS_BACKUP, &dns_info ) );
 	ESP_LOGD( TAG, "SECONDARY DNS_INFO" );
 	ESP_LOGD( TAG, "~~~~~~~~~~~" );
 	ESP_LOGD( TAG, "DNSIP: " IPSTR, IP2STR( &dns_info.ip.u_addr.ip4 ) );
 	ESP_LOGD( TAG, "~~~~~~~~~~~" );
-	ESP_ERROR_CHECK( esp_netif_get_dns_info( eth_netif, ESP_NETIF_DNS_FALLBACK, &dns_info ) );
+	ESP_ERROR_CHECK( esp_netif_get_dns_info( eth_cfgs->eth_netif, ESP_NETIF_DNS_FALLBACK, &dns_info ) );
 	ESP_LOGD( TAG, "FALLBACK DNS_INFO" );
 	ESP_LOGD( TAG, "~~~~~~~~~~~" );
 	ESP_LOGD( TAG, "DNSIP: " IPSTR, IP2STR( &dns_info.ip.u_addr.ip4 ) );
 	ESP_LOGD( TAG, "~~~~~~~~~~~" );
-	ESP_ERROR_CHECK( esp_netif_dhcpc_get_status( eth_netif, &dhcp_status ) );
+	ESP_ERROR_CHECK( esp_netif_dhcpc_get_status( eth_cfgs->eth_netif, &dhcp_status ) );
 	ESP_LOGD( TAG, "DHCP STATUS: %d", dhcp_status );
 
 	ESP_LOGD( TAG, "Attempting to stop it..." );
 
-	ESP_ERROR_CHECK( esp_netif_dhcpc_stop( eth_netif ) );
+	ESP_ERROR_CHECK( esp_netif_dhcpc_stop( eth_cfgs->eth_netif ) );
 	ESP_LOGD( TAG, "DHCP stopped. Changing IP info..." );
 
 	ip_info.ip.addr = sip->ip.u32;
 	ip_info.netmask.addr = sip->nm.u32;
 	ip_info.gw.addr = sip->gw.u32;
-	ESP_ERROR_CHECK( esp_netif_set_old_ip_info( eth_netif, &ip_info ) );
-	ESP_ERROR_CHECK( esp_netif_set_ip_info( eth_netif, &ip_info ) );
+	ESP_ERROR_CHECK( esp_netif_set_old_ip_info( eth_cfgs->eth_netif, &ip_info ) );
+	ESP_ERROR_CHECK( esp_netif_set_ip_info( eth_cfgs->eth_netif, &ip_info ) );
 
 	dns_info.ip.u_addr.ip4.addr = sip->p_dns.u32;
-	ESP_ERROR_CHECK( esp_netif_set_dns_info( eth_netif, ESP_NETIF_DNS_MAIN, &dns_info ) );
+	ESP_ERROR_CHECK( esp_netif_set_dns_info( eth_cfgs->eth_netif, ESP_NETIF_DNS_MAIN, &dns_info ) );
 	dns_info.ip.u_addr.ip4.addr = sip->s_dns.u32;
-	ESP_ERROR_CHECK( esp_netif_set_dns_info( eth_netif, ESP_NETIF_DNS_BACKUP, &dns_info ) );
+	ESP_ERROR_CHECK( esp_netif_set_dns_info( eth_cfgs->eth_netif, ESP_NETIF_DNS_BACKUP, &dns_info ) );
 	if ( sip->f_dns.u32 )
 	{
 		dns_info.ip.u_addr.ip4.addr = sip->f_dns.u32;
-		ESP_ERROR_CHECK( esp_netif_set_dns_info( eth_netif, ESP_NETIF_DNS_FALLBACK, &dns_info ) );
+		ESP_ERROR_CHECK( esp_netif_set_dns_info( eth_cfgs->eth_netif, ESP_NETIF_DNS_FALLBACK, &dns_info ) );
 	}
 
 	ESP_LOGD( TAG, "After static IP setup..." );
-	ESP_ERROR_CHECK( esp_netif_get_old_ip_info( eth_netif, &ip_info ) );
+	ESP_ERROR_CHECK( esp_netif_get_old_ip_info( eth_cfgs->eth_netif, &ip_info ) );
 	ESP_LOGD( TAG, "OLD_IP_INFO" );
 	ESP_LOGD( TAG, "~~~~~~~~~~~" );
 	ESP_LOGD( TAG, "ETHIP: " IPSTR, IP2STR( &ip_info.ip ) );
 	ESP_LOGD( TAG, "ETHMASK: " IPSTR, IP2STR( &ip_info.netmask ) );
 	ESP_LOGD( TAG, "ETHGW: " IPSTR, IP2STR( &ip_info.gw ) );
 	ESP_LOGD( TAG, "~~~~~~~~~~~" );
-	ESP_ERROR_CHECK( esp_netif_get_ip_info( eth_netif, &ip_info ) );
+	ESP_ERROR_CHECK( esp_netif_get_ip_info( eth_cfgs->eth_netif, &ip_info ) );
 	ESP_LOGD( TAG, "IP_INFO" );
 	ESP_LOGD( TAG, "~~~~~~~~~~~" );
 	ESP_LOGD( TAG, "ETHIP: " IPSTR, IP2STR( &ip_info.ip ) );
 	ESP_LOGD( TAG, "ETHMASK: " IPSTR, IP2STR( &ip_info.netmask ) );
 	ESP_LOGD( TAG, "ETHGW: " IPSTR, IP2STR( &ip_info.gw ) );
 	ESP_LOGD( TAG, "~~~~~~~~~~~" );
-	ESP_ERROR_CHECK( esp_netif_get_dns_info( eth_netif, ESP_NETIF_DNS_MAIN, &dns_info ) );
+	ESP_ERROR_CHECK( esp_netif_get_dns_info( eth_cfgs->eth_netif, ESP_NETIF_DNS_MAIN, &dns_info ) );
 	ESP_LOGD( TAG, "MAIN DNS_INFO" );
 	ESP_LOGD( TAG, "~~~~~~~~~~~" );
 	ESP_LOGD( TAG, "DNSIP: " IPSTR, IP2STR( &dns_info.ip.u_addr.ip4 ) );
 	ESP_LOGD( TAG, "~~~~~~~~~~~" );
-	ESP_ERROR_CHECK( esp_netif_get_dns_info( eth_netif, ESP_NETIF_DNS_BACKUP, &dns_info ) );
+	ESP_ERROR_CHECK( esp_netif_get_dns_info( eth_cfgs->eth_netif, ESP_NETIF_DNS_BACKUP, &dns_info ) );
 	ESP_LOGD( TAG, "SECONDARY DNS_INFO" );
 	ESP_LOGD( TAG, "~~~~~~~~~~~" );
 	ESP_LOGD( TAG, "DNSIP: " IPSTR, IP2STR( &dns_info.ip.u_addr.ip4 ) );
 	ESP_LOGD( TAG, "~~~~~~~~~~~" );
-	ESP_ERROR_CHECK( esp_netif_get_dns_info( eth_netif, ESP_NETIF_DNS_FALLBACK, &dns_info ) );
+	ESP_ERROR_CHECK( esp_netif_get_dns_info( eth_cfgs->eth_netif, ESP_NETIF_DNS_FALLBACK, &dns_info ) );
 	ESP_LOGD( TAG, "FALLBACK DNS_INFO" );
 	ESP_LOGD( TAG, "~~~~~~~~~~~" );
 	ESP_LOGD( TAG, "DNSIP: " IPSTR, IP2STR( &dns_info.ip.u_addr.ip4 ) );
 	ESP_LOGD( TAG, "~~~~~~~~~~~" );
-	ESP_ERROR_CHECK( esp_netif_dhcpc_get_status( eth_netif, &dhcp_status ) );
+	ESP_ERROR_CHECK( esp_netif_dhcpc_get_status( eth_cfgs->eth_netif, &dhcp_status ) );
 	ESP_LOGD( TAG, "DHCP STATUS: %d", dhcp_status );
 }
 
 void eth_deinit( void )
 {
-	ESP_ERROR_CHECK( esp_eth_stop( eth_handle ) );
-	ESP_LOGI( TAG, "%d", __LINE__ );
-	ESP_ERROR_CHECK( esp_eth_del_netif_glue( eth_netif_glue ) );
-	ESP_LOGI( TAG, "%d", __LINE__ );
-	ESP_ERROR_CHECK( esp_eth_driver_uninstall( eth_handle ) );
-	ESP_LOGI( TAG, "%d", __LINE__ );
-	ESP_ERROR_CHECK( eth_config.phy->del( eth_config.phy ) );
-	ESP_LOGI( TAG, "%d", __LINE__ );
-	ESP_ERROR_CHECK( eth_config.mac->del( eth_config.mac ) );
-	ESP_LOGI( TAG, "%d", __LINE__ );
-	ESP_ERROR_CHECK( esp_eth_clear_default_handlers( eth_netif ) );
-	ESP_LOGI( TAG, "%d", __LINE__ );
-	esp_netif_destroy( eth_netif );
-	ESP_LOGI( TAG, "%d", __LINE__ );
+	ESP_ERROR_CHECK( esp_eth_stop( eth_cfgs->eth_handle ) );
+	ESP_ERROR_CHECK( esp_eth_del_netif_glue( eth_cfgs->eth_netif_glue ) );
+	ESP_ERROR_CHECK( esp_eth_clear_default_handlers( eth_cfgs->eth_netif ) );
+	ESP_ERROR_CHECK( esp_eth_driver_uninstall( eth_cfgs->eth_handle ) );
+	ESP_ERROR_CHECK( eth_cfgs->eth_config.phy->del( eth_cfgs->eth_config.phy ) );
+	ESP_ERROR_CHECK( eth_cfgs->eth_config.mac->del( eth_cfgs->eth_config.mac ) );
+	esp_netif_destroy( eth_cfgs->eth_netif );
 	w5100_spi_deinit();
-	ESP_LOGI( TAG, "%d", __LINE__ );
+	free( eth_cfgs );
 }
 
-void eth_main( const struct eth_ifconfig *const cfg )
+void eth_init( const struct eth_ifconfig *const cfg )
 {
-	eth_netif = esp_netif_new( &( const esp_netif_config_t )ESP_NETIF_DEFAULT_ETH() );
+	ESP_ERROR_CHECK( !( eth_cfgs = calloc( 1, sizeof *eth_cfgs ) ) );
+
+	eth_cfgs->eth_netif = esp_netif_new( &( const esp_netif_config_t )ESP_NETIF_DEFAULT_ETH() );
 
 	if ( cfg )
 	{
 		if ( *cfg->hostname )
-			ESP_ERROR_CHECK( esp_netif_set_hostname( eth_netif, cfg->hostname ) );
+			ESP_ERROR_CHECK( esp_netif_set_hostname( eth_cfgs->eth_netif, cfg->hostname ) );
 
 		if ( cfg->sip )
 		{
@@ -157,7 +157,7 @@ void eth_main( const struct eth_ifconfig *const cfg )
 	}
 
 	// Set default handlers to process TCP/IP stuffs
-	ESP_ERROR_CHECK( esp_eth_set_default_handlers( eth_netif ) );
+	ESP_ERROR_CHECK( esp_eth_set_default_handlers( eth_cfgs->eth_netif ) );
 
 	eth_mac_config_t mac_config = ETH_MAC_DEFAULT_CONFIG();
 	// mac_config.rx_task_stack_size = 1536;
@@ -167,16 +167,16 @@ void eth_main( const struct eth_ifconfig *const cfg )
 	esp_eth_phy_t *phy = esp_eth_phy_new_w5100( NULL ); // No PHY pins connected
 
 	esp_eth_config_t eth_cfg = ETH_DEFAULT_CONFIG( mac, phy );
-	eth_config = eth_cfg;
-	// eth_config.check_link_period_ms = UINT32_MAX;
+	eth_cfgs->eth_config = eth_cfg;
+	// eth_cfgs->eth_config.check_link_period_ms = UINT32_MAX;
 
 	w5100_spi_init( cfg->w5100_cfg );
 
-	ESP_ERROR_CHECK( esp_eth_driver_install( &eth_config, &eth_handle ) );
+	ESP_ERROR_CHECK( esp_eth_driver_install( &eth_cfgs->eth_config, &eth_cfgs->eth_handle ) );
 
-	ESP_ERROR_CHECK( !( eth_netif_glue = esp_eth_new_netif_glue( eth_handle ) ) );
+	ESP_ERROR_CHECK( !( eth_cfgs->eth_netif_glue = esp_eth_new_netif_glue( eth_cfgs->eth_handle ) ) );
 	/* attach Ethernet driver to TCP/IP stack */
-	ESP_ERROR_CHECK( esp_netif_attach( eth_netif, eth_netif_glue ) );
+	ESP_ERROR_CHECK( esp_netif_attach( eth_cfgs->eth_netif, eth_cfgs->eth_netif_glue ) );
 	/* start Ethernet driver state machine */
-	ESP_ERROR_CHECK( esp_eth_start( eth_handle ) );
+	ESP_ERROR_CHECK( esp_eth_start( eth_cfgs->eth_handle ) );
 }

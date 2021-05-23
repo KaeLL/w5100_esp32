@@ -73,11 +73,7 @@ static esp_err_t emac_w5100_start( esp_eth_mac_t *mac )
 
 static esp_err_t emac_w5100_stop( esp_eth_mac_t *mac )
 {
-	emac_w5100_t *emac = __containerof( mac, emac_w5100_t, parent );
-	esp_err_t ret
-		= pdTRUE == xTaskNotify( emac->rx_task_hdl, W5100_TSK_HOLD_ON, eSetValueWithoutOverwrite ) ? ESP_OK : ESP_FAIL;
-	w5100_socket_close();
-	return ret;
+	return ESP_OK;
 }
 
 static esp_err_t emac_w5100_set_addr( esp_eth_mac_t *mac, uint8_t *addr )
@@ -198,7 +194,7 @@ static esp_err_t emac_w5100_transmit( esp_eth_mac_t *mac, uint8_t *buf, uint32_t
 
 static esp_err_t emac_w5100_receive( esp_eth_mac_t *mac, uint8_t *buf, uint32_t *length )
 {
-	*length = w5100_socket_recv( ( uint8_t * *const ) buf );
+	*length = w5100_socket_recv( ( uint8_t * *const )buf );
 #if CONFIG_W5100_DEBUG_RX
 	ESP_LOGD( TAG, "buf = %p\tlength = %" PRIu32, buf, *length );
 	ESP_LOG_BUFFER_HEXDUMP( __func__, buf, *length, ESP_LOG_DEBUG );
@@ -232,6 +228,7 @@ static esp_err_t emac_w5100_deinit( esp_eth_mac_t *mac )
 	emac->eth->on_state_changed( emac->eth, ETH_STATE_DEINIT, NULL );
 	esp_err_t ret
 		= pdPASS == xTaskNotify( emac->rx_task_hdl, W5100_TSK_DELETE, eSetValueWithoutOverwrite ) ? ESP_OK : ESP_FAIL;
+	w5100_socket_close();
 
 	return ret;
 }
