@@ -149,11 +149,8 @@ void eth_init( const struct eth_ifconfig *const cfg )
 		if ( *cfg->hostname )
 			ESP_ERROR_CHECK( esp_netif_set_hostname( eth_cfgs->eth_netif, cfg->hostname ) );
 
-		if ( cfg->sip )
-		{
-			if ( cfg->sip->ip.u32 )
-				eth_enable_static_ip( cfg->sip );
-		}
+		if ( cfg->sip.ip.u32 )
+			eth_enable_static_ip( &cfg->sip );
 	}
 
 	// Set default handlers to process TCP/IP stuffs
@@ -170,7 +167,7 @@ void eth_init( const struct eth_ifconfig *const cfg )
 	eth_cfgs->eth_config = eth_cfg;
 	// eth_cfgs->eth_config.check_link_period_ms = UINT32_MAX;
 
-	w5100_spi_init( cfg->w5100_cfg );
+	w5100_spi_init( &cfg->w5100_cfg );
 
 	ESP_ERROR_CHECK( esp_eth_driver_install( &eth_cfgs->eth_config, &eth_cfgs->eth_handle ) );
 
