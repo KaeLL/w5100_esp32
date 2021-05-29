@@ -158,10 +158,10 @@ void eth_init( const struct eth_ifconfig *const cfg )
 
 	eth_mac_config_t mac_config = ETH_MAC_DEFAULT_CONFIG();
 	// mac_config.rx_task_stack_size = 1536;
-	mac_config.smi_mdc_gpio_num = -1; // w5100 doesn't have SMI interface
+	mac_config.smi_mdc_gpio_num = -1;  // w5100 doesn't have SMI interface
 	mac_config.smi_mdio_gpio_num = -1;
 	esp_eth_mac_t *mac = esp_eth_mac_new_w5100( &mac_config );
-	esp_eth_phy_t *phy = esp_eth_phy_new_w5100( NULL ); // No PHY pins connected
+	esp_eth_phy_t *phy = esp_eth_phy_new_w5100( NULL );	 // No PHY pins connected
 
 	esp_eth_config_t eth_cfg = ETH_DEFAULT_CONFIG( mac, phy );
 	eth_cfgs->eth_config = eth_cfg;

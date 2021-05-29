@@ -66,8 +66,8 @@ out:
 static esp_err_t emac_w5100_start( esp_eth_mac_t *mac )
 {
 	emac_w5100_t *emac = __containerof( mac, emac_w5100_t, parent );
-	esp_err_t ret
-		= pdTRUE == xTaskNotify( emac->rx_task_hdl, W5100_TSK_GO_ON, eSetValueWithoutOverwrite ) ? ESP_OK : ESP_FAIL;
+	esp_err_t ret =
+		pdTRUE == xTaskNotify( emac->rx_task_hdl, W5100_TSK_GO_ON, eSetValueWithoutOverwrite ) ? ESP_OK : ESP_FAIL;
 	return ret;
 }
 
@@ -226,8 +226,8 @@ static esp_err_t emac_w5100_deinit( esp_eth_mac_t *mac )
 {
 	emac_w5100_t *emac = __containerof( mac, emac_w5100_t, parent );
 	emac->eth->on_state_changed( emac->eth, ETH_STATE_DEINIT, NULL );
-	esp_err_t ret
-		= pdPASS == xTaskNotify( emac->rx_task_hdl, W5100_TSK_DELETE, eSetValueWithoutOverwrite ) ? ESP_OK : ESP_FAIL;
+	esp_err_t ret =
+		pdPASS == xTaskNotify( emac->rx_task_hdl, W5100_TSK_DELETE, eSetValueWithoutOverwrite ) ? ESP_OK : ESP_FAIL;
 	w5100_socket_close();
 
 	return ret;
@@ -266,7 +266,8 @@ esp_eth_mac_t *esp_eth_mac_new_w5100( const eth_mac_config_t *const mac_config )
 	emac->parent.set_promiscuous = emac_w5100_set_promiscuous;
 	emac->parent.del = emac_w5100_del;
 
-	BaseType_t xReturned = xTaskCreatePinnedToCore( emac_w5100_task,
+	BaseType_t xReturned = xTaskCreatePinnedToCore(
+		emac_w5100_task,
 		"w5100_tsk",
 		mac_config->rx_task_stack_size,
 		emac,

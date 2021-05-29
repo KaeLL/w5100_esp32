@@ -59,7 +59,7 @@ uint16_t read_uint16_reg( const uint16_t addr )
 
 void write_uint16_reg( const uint16_t addr, const uint16_t data )
 {
-	wiz_write_buf( addr, ( const uint8_t *const )&( uint16_t ){ __builtin_bswap16( data ) }, 2 );
+	wiz_write_buf( addr, ( const uint8_t *const )&( uint16_t ) { __builtin_bswap16( data ) }, 2 );
 }
 
 uint16_t getS0_XX_XSR( const uint16_t addr )

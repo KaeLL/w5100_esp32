@@ -21,8 +21,8 @@ struct eth_static_ip
 
 struct eth_ifconfig
 {
-	char hostname[ 32 ];			 // Max 32 characters
-	struct eth_static_ip sip; // Data is assumed to be in network order.
+	char hostname[ 32 ];	   // Max 32 characters
+	struct eth_static_ip sip;  // Data is assumed to be in network order.
 	struct w5100_config_t w5100_cfg;
 };
 

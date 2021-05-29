@@ -3,11 +3,11 @@
 
 #include "freertos/FreeRTOS.h"
 #if CONFIG_W5100_SPI_LOCK
-#	include "freertos/semphr.h"
+#include "freertos/semphr.h"
 #endif
 #include "freertos/task.h"
 #if CONFIG_W5100_SPI_EN_MANUAL
-#	include "driver/gpio.h"
+#include "driver/gpio.h"
 #endif
 #include "esp_attr.h"
 #include "driver/spi_master.h"
@@ -25,9 +25,9 @@ w5100_ll_t *w5100_ll_data;
 DMA_ATTR uint32_t tx_tr, rx_tr;
 
 #if CONFIG_W5100_POLLING_SPI_TRANS
-#	define W5100_TR spi_device_polling_transmit
+#define W5100_TR spi_device_polling_transmit
 #else
-#	define W5100_TR spi_device_transmit
+#define W5100_TR spi_device_transmit
 #endif
 
 #if CONFIG_W5100_SPI_EN_MANUAL
@@ -52,13 +52,15 @@ void w5100_ll_hw_reset( void )
 
 void w5100_spi_init( const struct w5100_config_t *const w5100_cfg )
 {
-	ESP_ERROR_CHECK( gpio_config( &( const gpio_config_t ){ BIT64( CONFIG_W5100_RESET_GPIO ),
+	ESP_ERROR_CHECK( gpio_config( &( const gpio_config_t ) {
+		BIT64( CONFIG_W5100_RESET_GPIO ),
 		GPIO_MODE_OUTPUT,
 		GPIO_PULLUP_DISABLE,
 		GPIO_PULLDOWN_DISABLE,
 		GPIO_INTR_DISABLE } ) );
 #if CONFIG_W5100_SPI_EN_MANUAL
-	ESP_ERROR_CHECK( gpio_config( &( const gpio_config_t ){ BIT64( CONFIG_W5100_SPI_EN_GPIO ),
+	ESP_ERROR_CHECK( gpio_config( &( const gpio_config_t ) {
+		BIT64( CONFIG_W5100_SPI_EN_GPIO ),
 		GPIO_MODE_OUTPUT,
 		GPIO_PULLUP_DISABLE,
 		GPIO_PULLDOWN_DISABLE,
@@ -77,7 +79,8 @@ void w5100_spi_init( const struct w5100_config_t *const w5100_cfg )
 #endif
 	ESP_ERROR_CHECK( spi_bus_add_device(
 		CONFIG_W5100_SPI_BUS - 1,
-		&( spi_device_interface_config_t ) {
+		&( spi_device_interface_config_t )
+		{
 			.clock_speed_hz = CONFIG_W5100_SPI_CLCK, .spics_io_num = CONFIG_W5100_CS, .queue_size = 1,
 #if CONFIG_W5100_SPI_EN_MANUAL
 			.pre_cb = w5100_SPI_EN_assert, .post_cb = w5100_SPI_En_deassert
@@ -122,8 +125,9 @@ void w5100_spi_op( const uint32_t tx, uint32_t *const rx )
 	ESP_ERROR_CHECK( pdFALSE == xSemaphoreTake( w5100_ll_data->eth_mutex, portMAX_DELAY ) );
 #endif
 	tx_tr = tx, rx_tr = rx ? *rx : ( uint32_t )NULL;
-	ESP_ERROR_CHECK( W5100_TR( w5100_ll_data->w5100_spi_handle,
-		&( spi_transaction_t ){ .length = 32, .tx_buffer = &tx_tr, .rx_buffer = &rx_tr } ) );
+	ESP_ERROR_CHECK(
+		W5100_TR( w5100_ll_data->w5100_spi_handle,
+				  &( spi_transaction_t ) { .length = 32, .tx_buffer = &tx_tr, .rx_buffer = &rx_tr } ) );
 	if ( rx )
 		*rx = rx_tr;
 #if CONFIG_W5100_SPI_LOCK
