@@ -23,6 +23,18 @@ menu "W5100 configurations"
         help
             Clock speed that should be used to communicate with W5100.
 
+    menu "W5100 debug options"
+        config W5100_DEBUG_TX
+            bool "Dump data sent (TX)"
+            help
+                Dump data sent to the chip
+
+        config W5100_DEBUG_RX
+            bool "Dump data received (RX)"
+            help
+                Dump data received from the chip
+    endmenu
+
     config EMAC_RECV_TASK_ENABLE_CORE_AFFINITY
         bool "Enable W5100 recv task core selection"
         default y

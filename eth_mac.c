@@ -184,7 +184,7 @@ static esp_err_t emac_w5100_set_promiscuous( esp_eth_mac_t *mac, bool enable )
 static esp_err_t emac_w5100_transmit( esp_eth_mac_t *mac, uint8_t *buf, uint32_t length )
 {
 #if CONFIG_W5100_DEBUG_TX
-	ESP_LOGD( TAG, "buf = %p\tlength = %" PRIu32, buf, length );
+	ESP_LOGD( __func__, "length = %" PRIu32, length );
 	ESP_LOG_BUFFER_HEXDUMP( __func__, buf, length, ESP_LOG_DEBUG );
 #endif
 	w5100_socket_send( buf, ( uint16_t )length );
@@ -194,10 +194,11 @@ static esp_err_t emac_w5100_transmit( esp_eth_mac_t *mac, uint8_t *buf, uint32_t
 
 static esp_err_t emac_w5100_receive( esp_eth_mac_t *mac, uint8_t *buf, uint32_t *length )
 {
-	*length = w5100_socket_recv( ( uint8_t * *const )buf );
+	uint8_t **const pBuf = ( uint8_t * *const )buf;
+	*length = w5100_socket_recv( pBuf );
 #if CONFIG_W5100_DEBUG_RX
-	ESP_LOGD( TAG, "buf = %p\tlength = %" PRIu32, buf, *length );
-	ESP_LOG_BUFFER_HEXDUMP( __func__, buf, *length, ESP_LOG_DEBUG );
+	ESP_LOGD( __func__, "length = %" PRIu32, *length );
+	ESP_LOG_BUFFER_HEXDUMP( __func__, *pBuf, *length, ESP_LOG_DEBUG );
 #endif
 	return *length ? ESP_OK : ESP_FAIL;
 }
