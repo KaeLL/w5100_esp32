@@ -172,6 +172,11 @@ void eth_init( const struct eth_ifconfig *const cfg )
 	ESP_ERROR_CHECK( esp_eth_driver_install( &eth_cfgs->eth_config, &eth_cfgs->eth_handle ) );
 
 	ESP_ERROR_CHECK( !( eth_cfgs->eth_netif_glue = esp_eth_new_netif_glue( eth_cfgs->eth_handle ) ) );
+
+	uint8_t mac_addr[ 6 ];
+	ESP_ERROR_CHECK( esp_read_mac( mac_addr, ESP_MAC_ETH ) );
+	ESP_ERROR_CHECK( esp_eth_ioctl( eth_cfgs->eth_handle, ETH_CMD_S_MAC_ADDR, mac_addr ) );
+
 	/* attach Ethernet driver to TCP/IP stack */
 	ESP_ERROR_CHECK( esp_netif_attach( eth_cfgs->eth_netif, eth_cfgs->eth_netif_glue ) );
 	/* start Ethernet driver state machine */
