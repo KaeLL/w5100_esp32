@@ -1,5 +1,6 @@
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -8,11 +9,12 @@
 #include "esp_event.h"
 #include "esp_log.h"
 #include "driver/gpio.h"
-#include "sdkconfig.h"
 
 #include "w5100_ll.h"
+#include "w5100_config.h"
 #include "eth_if.h"
 #include "eth_main.h"
+#include "w5100_internal.h"
 
 static const char *TAG = "eth_main";
 
@@ -22,6 +24,7 @@ struct
 	esp_netif_t *eth_netif;
 	esp_eth_handle_t eth_handle;
 	void *eth_netif_glue;
+	struct w5100_config_t w5100_cfg;
 } * eth_cfgs;
 
 void eth_enable_static_ip( const struct eth_static_ip *const sip )
@@ -134,7 +137,7 @@ void eth_deinit( void )
 	ESP_ERROR_CHECK( eth_cfgs->eth_config.phy->del( eth_cfgs->eth_config.phy ) );
 	ESP_ERROR_CHECK( eth_cfgs->eth_config.mac->del( eth_cfgs->eth_config.mac ) );
 	esp_netif_destroy( eth_cfgs->eth_netif );
-	w5100_spi_deinit();
+	eth_cfgs->w5100_cfg.deinit();
 	free( eth_cfgs );
 }
 
@@ -153,6 +156,9 @@ void eth_init( const struct eth_ifconfig *const cfg )
 			eth_enable_static_ip( &cfg->sip );
 	}
 
+	memcpy( &eth_cfgs->w5100_cfg, &cfg->w5100_cfg, sizeof cfg->w5100_cfg );
+	pre_init_setup( &eth_cfgs->w5100_cfg );
+
 	// Set default handlers to process TCP/IP stuffs
 	ESP_ERROR_CHECK( esp_eth_set_default_handlers( eth_cfgs->eth_netif ) );
 
@@ -167,10 +173,9 @@ void eth_init( const struct eth_ifconfig *const cfg )
 	eth_cfgs->eth_config = eth_cfg;
 	// eth_cfgs->eth_config.check_link_period_ms = UINT32_MAX;
 
-	w5100_spi_init( &cfg->w5100_cfg );
+	eth_cfgs->w5100_cfg.init();
 
 	ESP_ERROR_CHECK( esp_eth_driver_install( &eth_cfgs->eth_config, &eth_cfgs->eth_handle ) );
-
 	ESP_ERROR_CHECK( !( eth_cfgs->eth_netif_glue = esp_eth_new_netif_glue( eth_cfgs->eth_handle ) ) );
 
 	uint8_t mac_addr[ 6 ];

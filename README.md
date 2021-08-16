@@ -1,19 +1,9 @@
 ## Port of the WIZnet W5100 chip to ESP32's esp-idf.
 
-The repo structure is modeled after the standard
-esp32 app component, making it plug n' play for
-your project, with the exception that particular
-details about your board design have to be changed
-on menuconfig or even ported/developed from scratch.
-
 This is incomplete, and some initialization
-boilerplate must be provided. The ESP32_W5100
-superproject is provided as a baseline.
-
-By default, my board design is assumed. This is
-reflected on GPIO's used, manual control of the
-SPI_EN pin, and the use of polling instead
-of interrupts for Slave -> Master communication.
+boilerplate and lower-level layer of the driver
+must be provided. The ESP32_W5100 superproject is
+provided as a baseline.
 
 Roadmap:
 - Done:

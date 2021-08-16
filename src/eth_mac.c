@@ -1,6 +1,4 @@
 
-#include "sdkconfig.h"
-
 #include <string.h>
 #include <stdlib.h>
 #include <inttypes.h>
@@ -38,7 +36,7 @@ typedef struct
 	esp_eth_mediator_t *eth;
 	TaskHandle_t rx_task_hdl;
 	uint8_t addr[ 6 ];
-	_Bool isPromiscousModeEnabled;
+	bool promiscousModeDisabled;
 } emac_w5100_t;
 
 static const char *TAG = "w5100_eth_mac";
@@ -81,6 +79,7 @@ static esp_err_t emac_w5100_set_addr( esp_eth_mac_t *mac, uint8_t *addr )
 	esp_err_t ret = ESP_OK;
 	MAC_CHECK( addr, "can't set mac addr to null", out, ESP_ERR_INVALID_ARG );
 	emac_w5100_t *emac = __containerof( mac, emac_w5100_t, parent );
+	w5100_setMAC( addr );
 	memcpy( emac->addr, addr, 6 );
 out:
 	return ret;
@@ -167,15 +166,15 @@ static esp_err_t emac_w5100_set_promiscuous( esp_eth_mac_t *mac, bool enable )
 {
 	emac_w5100_t *emac = __containerof( mac, emac_w5100_t, parent );
 
-	if ( enable && !emac->isPromiscousModeEnabled )
+	if ( enable && emac->promiscousModeDisabled )
 	{
 		w5100_enablePromiscuousMode();
-		emac->isPromiscousModeEnabled = false;
+		emac->promiscousModeDisabled = false;
 	}
-	else if ( !enable && emac->isPromiscousModeEnabled )
+	else if ( !( enable || emac->promiscousModeDisabled ) )
 	{
 		w5100_disablePromiscuousMode();
-		emac->isPromiscousModeEnabled = true;
+		emac->promiscousModeDisabled = true;
 	}
 
 	return ESP_OK;
@@ -210,11 +209,10 @@ static esp_err_t emac_w5100_init( esp_eth_mac_t *mac )
 	esp_eth_mediator_t *eth = emac->eth;
 
 	w5100_init();
-	w5100_socket_open( false );
+	w5100_socket_open();
+	ESP_ERROR_CHECK( mac->set_promiscuous( mac, false ) );
 
 	MAC_CHECK( eth->on_state_changed( eth, ETH_STATE_LLINIT, NULL ) == ESP_OK, "lowlevel init failed", out, ESP_FAIL );
-
-	ESP_ERROR_CHECK( mac->start( mac ) );
 
 	return ret;
 out:
