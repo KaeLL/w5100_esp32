@@ -9,6 +9,7 @@
 #include "esp_event.h"
 #include "esp_log.h"
 #include "driver/gpio.h"
+#include "esp_idf_version.h"
 
 #include "w5100_ll.h"
 #include "w5100_config.h"
@@ -159,8 +160,10 @@ void eth_init( const struct eth_ifconfig *const cfg )
 	memcpy( &eth_cfgs->w5100_cfg, &cfg->w5100_cfg, sizeof cfg->w5100_cfg );
 	pre_init_setup( &eth_cfgs->w5100_cfg );
 
+#if ESP_IDF_VERSION < ESP_IDF_VERSION_VAL(4, 4, 0)
 	// Set default handlers to process TCP/IP stuffs
 	ESP_ERROR_CHECK( esp_eth_set_default_handlers( eth_cfgs->eth_netif ) );
+#endif
 
 	eth_mac_config_t mac_config = ETH_MAC_DEFAULT_CONFIG();
 	// mac_config.rx_task_stack_size = 1536;
