@@ -160,7 +160,7 @@ void eth_init( const struct eth_ifconfig *const cfg )
 	memcpy( &eth_cfgs->w5100_cfg, &cfg->w5100_cfg, sizeof cfg->w5100_cfg );
 	pre_init_setup( &eth_cfgs->w5100_cfg );
 
-#if ESP_IDF_VERSION < ESP_IDF_VERSION_VAL(4, 4, 0)
+#if ESP_IDF_VERSION < ESP_IDF_VERSION_VAL( 4, 4, 0 )
 	// Set default handlers to process TCP/IP stuffs
 	ESP_ERROR_CHECK( esp_eth_set_default_handlers( eth_cfgs->eth_netif ) );
 #endif

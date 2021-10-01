@@ -1,5 +1,4 @@
 ---
-Language: Cpp
 AccessModifierOffset: -2
 AlignAfterOpenBracket: Align
 AlignConsecutiveAssignments: None
@@ -79,11 +78,11 @@ IndentCaseLabels: true
 IndentExternBlock: NoIndent
 IndentGotoLabels: false
 IndentPPDirectives: None
-IndentRequires: true
+IndentRequires: false
 IndentWidth:     4
 IndentWrappedFunctionNames: true
-InsertTrailingCommas: None
 KeepEmptyLinesAtTheStartOfBlocks: false
+Language: Cpp
 MacroBlockBegin: ''
 MacroBlockEnd:   ''
 MaxEmptyLinesToKeep: 1
@@ -120,7 +119,6 @@ SpacesBeforeTrailingComments: 2
 SpacesInAngles:  true
 SpacesInCStyleCastParentheses: true
 SpacesInConditionalStatement: true
-SpacesInContainerLiterals: false
 SpacesInParentheses: true
 SpacesInSquareBrackets: true
 Standard:  Latest
