@@ -10,6 +10,7 @@
 #include "esp_log.h"
 #include "driver/gpio.h"
 #include "esp_idf_version.h"
+#include "esp_mac.h"
 
 #include "w5100_ll.h"
 #include "w5100_config.h"
@@ -24,7 +25,6 @@ struct
 	esp_eth_config_t eth_config;
 	esp_netif_t *eth_netif;
 	esp_eth_handle_t eth_handle;
-	void *eth_netif_glue;
 	struct w5100_config_t w5100_cfg;
 } * eth_cfgs;
 
@@ -129,11 +129,14 @@ void eth_enable_static_ip( const struct eth_static_ip *const sip )
 	ESP_LOGD( TAG, "DHCP STATUS: %d", dhcp_status );
 }
 
+#ifdef CONFIG_TEST_DEINIT
 void eth_deinit( void )
 {
 	ESP_ERROR_CHECK( esp_eth_stop( eth_cfgs->eth_handle ) );
-	ESP_ERROR_CHECK( esp_eth_del_netif_glue( eth_cfgs->eth_netif_glue ) );
+	// ESP_ERROR_CHECK( esp_eth_del_netif_glue( eth_cfgs->eth_netif_glue ) );
+#if ESP_IDF_VERSION < ESP_IDF_VERSION_VAL( 4, 4, 0 )
 	ESP_ERROR_CHECK( esp_eth_clear_default_handlers( eth_cfgs->eth_netif ) );
+#endif
 	ESP_ERROR_CHECK( esp_eth_driver_uninstall( eth_cfgs->eth_handle ) );
 	ESP_ERROR_CHECK( eth_cfgs->eth_config.phy->del( eth_cfgs->eth_config.phy ) );
 	ESP_ERROR_CHECK( eth_cfgs->eth_config.mac->del( eth_cfgs->eth_config.mac ) );
@@ -141,6 +144,7 @@ void eth_deinit( void )
 	eth_cfgs->w5100_cfg.deinit();
 	free( eth_cfgs );
 }
+#endif
 
 void eth_init( const struct eth_ifconfig *const cfg )
 {
@@ -166,27 +170,22 @@ void eth_init( const struct eth_ifconfig *const cfg )
 #endif
 
 	eth_mac_config_t mac_config = ETH_MAC_DEFAULT_CONFIG();
-	// mac_config.rx_task_stack_size = 1536;
-	mac_config.smi_mdc_gpio_num = -1;  // w5100 doesn't have SMI interface
-	mac_config.smi_mdio_gpio_num = -1;
 	esp_eth_mac_t *mac = esp_eth_mac_new_w5100( &mac_config );
 	esp_eth_phy_t *phy = esp_eth_phy_new_w5100( NULL );	 // No PHY pins connected
 
 	esp_eth_config_t eth_cfg = ETH_DEFAULT_CONFIG( mac, phy );
 	eth_cfgs->eth_config = eth_cfg;
-	// eth_cfgs->eth_config.check_link_period_ms = UINT32_MAX;
 
 	eth_cfgs->w5100_cfg.init();
 
 	ESP_ERROR_CHECK( esp_eth_driver_install( &eth_cfgs->eth_config, &eth_cfgs->eth_handle ) );
-	ESP_ERROR_CHECK( !( eth_cfgs->eth_netif_glue = esp_eth_new_netif_glue( eth_cfgs->eth_handle ) ) );
 
 	uint8_t mac_addr[ 6 ];
 	ESP_ERROR_CHECK( esp_read_mac( mac_addr, ESP_MAC_ETH ) );
 	ESP_ERROR_CHECK( esp_eth_ioctl( eth_cfgs->eth_handle, ETH_CMD_S_MAC_ADDR, mac_addr ) );
 
 	/* attach Ethernet driver to TCP/IP stack */
-	ESP_ERROR_CHECK( esp_netif_attach( eth_cfgs->eth_netif, eth_cfgs->eth_netif_glue ) );
+	ESP_ERROR_CHECK( esp_netif_attach( eth_cfgs->eth_netif, esp_eth_new_netif_glue( eth_cfgs->eth_handle ) ) );
 	/* start Ethernet driver state machine */
 	ESP_ERROR_CHECK( esp_eth_start( eth_cfgs->eth_handle ) );
 }

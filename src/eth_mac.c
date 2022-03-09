@@ -149,6 +149,8 @@ static void emac_w5100_task( void *arg )
 
 static esp_err_t emac_w5100_set_link( esp_eth_mac_t *mac, eth_link_t link )
 {
+	if ( link == ETH_LINK_UP )
+		ESP_ERROR_CHECK( mac->start( mac ) );
 	return ESP_OK;
 }
 
@@ -240,6 +242,16 @@ static esp_err_t emac_w5100_del( esp_eth_mac_t *mac )
 	return ESP_OK;
 }
 
+static esp_err_t emac_w5100_enable_flow_ctrl( esp_eth_mac_t *mac, bool enable )
+{
+	return ESP_OK;
+}
+
+static esp_err_t emac_w5100_set_peer_pause_ability( esp_eth_mac_t *mac, uint32_t ability )
+{
+	return ESP_OK;
+}
+
 esp_eth_mac_t *esp_eth_mac_new_w5100( const eth_mac_config_t *const mac_config )
 {
 	esp_eth_mac_t *ret = NULL;
@@ -263,6 +275,8 @@ esp_eth_mac_t *esp_eth_mac_new_w5100( const eth_mac_config_t *const mac_config )
 	emac->parent.set_duplex = emac_w5100_set_duplex;
 	emac->parent.set_link = emac_w5100_set_link;
 	emac->parent.set_promiscuous = emac_w5100_set_promiscuous;
+	emac->parent.enable_flow_ctrl = emac_w5100_enable_flow_ctrl;
+	emac->parent.set_peer_pause_ability = emac_w5100_set_peer_pause_ability;
 	emac->parent.del = emac_w5100_del;
 
 	BaseType_t xReturned = xTaskCreatePinnedToCore(
