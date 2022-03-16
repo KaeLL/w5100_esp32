@@ -7,23 +7,10 @@
 #include "freertos/task.h"
 #include "esp_log.h"
 
-#include "eth_main.h"
 #include "eth_if.h"
 
 #include "w5100.h"
-#include "w5100_ll.h"
 #include "w5100_socket.h"
-
-#define MAC_CHECK( a, str, goto_tag, ret_value, ... )                               \
-	do                                                                              \
-	{                                                                               \
-		if ( !( a ) )                                                               \
-		{                                                                           \
-			ESP_LOGE( TAG, "%s(%d): " str, __FUNCTION__, __LINE__, ##__VA_ARGS__ ); \
-			ret = ret_value;                                                        \
-			goto goto_tag;                                                          \
-		}                                                                           \
-	} while ( 0 )
 
 #define W5100_TSK_RUN	  ( ( uint32_t )0 )
 #define W5100_TSK_HOLD_ON ( ( uint32_t )1 )
@@ -53,20 +40,18 @@ static esp_err_t emac_w5100_read_phy_reg( esp_eth_mac_t *mac, uint32_t phy_addr,
 
 static esp_err_t emac_w5100_set_mediator( esp_eth_mac_t *mac, esp_eth_mediator_t *eth )
 {
-	esp_err_t ret = ESP_OK;
-	MAC_CHECK( eth, "can't set mac's mediator to null", out, ESP_ERR_INVALID_ARG );
+	ESP_ERROR_CHECK( !eth );
+
 	emac_w5100_t *emac = __containerof( mac, emac_w5100_t, parent );
 	emac->eth = eth;
-out:
-	return ret;
+
+	return ESP_OK;
 }
 
 static esp_err_t emac_w5100_start( esp_eth_mac_t *mac )
 {
 	emac_w5100_t *emac = __containerof( mac, emac_w5100_t, parent );
-	esp_err_t ret =
-		pdTRUE == xTaskNotify( emac->rx_task_hdl, W5100_TSK_GO_ON, eSetValueWithoutOverwrite ) ? ESP_OK : ESP_FAIL;
-	return ret;
+	return pdTRUE == xTaskNotify( emac->rx_task_hdl, W5100_TSK_GO_ON, eSetValueWithoutOverwrite ) ? ESP_OK : ESP_FAIL;
 }
 
 static esp_err_t emac_w5100_stop( esp_eth_mac_t *mac )
@@ -76,23 +61,21 @@ static esp_err_t emac_w5100_stop( esp_eth_mac_t *mac )
 
 static esp_err_t emac_w5100_set_addr( esp_eth_mac_t *mac, uint8_t *addr )
 {
-	esp_err_t ret = ESP_OK;
-	MAC_CHECK( addr, "can't set mac addr to null", out, ESP_ERR_INVALID_ARG );
+	ESP_ERROR_CHECK( !addr );
 	emac_w5100_t *emac = __containerof( mac, emac_w5100_t, parent );
 	w5100_setMAC( addr );
 	memcpy( emac->addr, addr, 6 );
-out:
-	return ret;
+
+	return ESP_OK;
 }
 
 static esp_err_t emac_w5100_get_addr( esp_eth_mac_t *mac, uint8_t *addr )
 {
-	esp_err_t ret = ESP_OK;
-	MAC_CHECK( addr, "can't set mac addr to null", out, ESP_ERR_INVALID_ARG );
+	ESP_ERROR_CHECK( !addr );
 	emac_w5100_t *emac = __containerof( mac, emac_w5100_t, parent );
 	memcpy( addr, emac->addr, 6 );
-out:
-	return ret;
+
+	return ESP_OK;
 }
 
 static void emac_w5100_task( void *arg )
@@ -206,27 +189,19 @@ static esp_err_t emac_w5100_receive( esp_eth_mac_t *mac, uint8_t *buf, uint32_t 
 
 static esp_err_t emac_w5100_init( esp_eth_mac_t *mac )
 {
-	esp_err_t ret = ESP_OK;
-	emac_w5100_t *emac = __containerof( mac, emac_w5100_t, parent );
-	esp_eth_mediator_t *eth = emac->eth;
-
+	esp_eth_mediator_t *eth = ( __containerof( mac, emac_w5100_t, parent ) )->eth;
 	w5100_init();
 	w5100_socket_open();
 	ESP_ERROR_CHECK( mac->set_promiscuous( mac, false ) );
+	ESP_ERROR_CHECK( eth->on_state_changed( eth, ETH_STATE_LLINIT, NULL ) );
 
-	MAC_CHECK( eth->on_state_changed( eth, ETH_STATE_LLINIT, NULL ) == ESP_OK, "lowlevel init failed", out, ESP_FAIL );
-
-	return ret;
-out:
-	eth->on_state_changed( eth, ETH_STATE_DEINIT, NULL );
-
-	return ret;
+	return ESP_OK;
 }
 
 static esp_err_t emac_w5100_deinit( esp_eth_mac_t *mac )
 {
 	emac_w5100_t *emac = __containerof( mac, emac_w5100_t, parent );
-	emac->eth->on_state_changed( emac->eth, ETH_STATE_DEINIT, NULL );
+	ESP_ERROR_CHECK( emac->eth->on_state_changed( emac->eth, ETH_STATE_DEINIT, NULL ) );
 	esp_err_t ret =
 		pdPASS == xTaskNotify( emac->rx_task_hdl, W5100_TSK_DELETE, eSetValueWithoutOverwrite ) ? ESP_OK : ESP_FAIL;
 	w5100_socket_close();
@@ -254,11 +229,10 @@ static esp_err_t emac_w5100_set_peer_pause_ability( esp_eth_mac_t *mac, uint32_t
 
 esp_eth_mac_t *esp_eth_mac_new_w5100( const eth_mac_config_t *const mac_config )
 {
-	esp_eth_mac_t *ret = NULL;
+	ESP_ERROR_CHECK( !mac_config );
 	emac_w5100_t *emac = NULL;
-	MAC_CHECK( mac_config, "can't set mac config to null", err, NULL );
 	emac = calloc( 1, sizeof( emac_w5100_t ) );
-	MAC_CHECK( emac, "calloc emac failed", err, NULL );
+	ESP_ERROR_CHECK( !emac );
 
 	emac->parent.set_mediator = emac_w5100_set_mediator;
 	emac->parent.init = emac_w5100_init;
@@ -279,30 +253,21 @@ esp_eth_mac_t *esp_eth_mac_new_w5100( const eth_mac_config_t *const mac_config )
 	emac->parent.set_peer_pause_ability = emac_w5100_set_peer_pause_ability;
 	emac->parent.del = emac_w5100_del;
 
-	BaseType_t xReturned = xTaskCreatePinnedToCore(
-		emac_w5100_task,
-		"w5100_tsk",
-		mac_config->rx_task_stack_size,
-		emac,
-		mac_config->rx_task_prio,
-		&emac->rx_task_hdl,
+	ESP_ERROR_CHECK(
+		pdPASS
+		!= xTaskCreatePinnedToCore(
+			emac_w5100_task,
+			"w5100_tsk",
+			mac_config->rx_task_stack_size,
+			emac,
+			mac_config->rx_task_prio,
+			&emac->rx_task_hdl,
 #if CONFIG_EMAC_RECV_TASK_ENABLE_CORE_AFFINITY
-		CONFIG_EMAC_RECV_TASK_CORE
+			CONFIG_EMAC_RECV_TASK_CORE
 #else
-		tskNO_AFFINITY
+			tskNO_AFFINITY
 #endif
-	);
-	MAC_CHECK( xReturned == pdPASS, "create w5100 task failed", err, NULL );
+			) );
 
 	return &( emac->parent );
-err:
-	if ( emac )
-	{
-		if ( emac->rx_task_hdl )
-			vTaskDelete( emac->rx_task_hdl );
-
-		free( emac );
-	}
-
-	return ret;
 }

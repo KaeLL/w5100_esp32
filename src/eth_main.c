@@ -1,19 +1,11 @@
 
-#include <stdlib.h>
 #include <string.h>
 
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
 #include "esp_netif.h"
-#include "esp_eth.h"
-#include "esp_event.h"
 #include "esp_log.h"
-#include "driver/gpio.h"
 #include "esp_idf_version.h"
 #include "esp_mac.h"
 
-#include "w5100_ll.h"
-#include "w5100_config.h"
 #include "eth_if.h"
 #include "eth_main.h"
 #include "w5100_internal.h"

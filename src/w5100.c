@@ -1,6 +1,7 @@
 
+#include <stdbool.h>
+
 #include "w5100_internal.h"
-#include "w5100_ll.h"
 #include "w5100.h"
 #include "w5100_reg.h"
 

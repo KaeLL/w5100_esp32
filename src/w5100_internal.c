@@ -1,9 +1,7 @@
 
-#include <stdio.h>
-#include <string.h>
+#include <stdint.h>
 
 #include "w5100_config.h"
-#include "w5100_reg.h"
 #include "w5100_internal.h"
 
 static const struct w5100_config_t *w5100_cfg;
