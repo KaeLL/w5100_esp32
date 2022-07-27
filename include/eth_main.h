@@ -1,22 +1,16 @@
 
 #pragma once
 
-#include "w5100_config.h"
+#include "esp_netif_ip_addr.h"
 
-typedef union
-{
-	uint32_t u32;
-	uint8_t u8[ 4 ];
-} dword;
+#include "w5100_config.h"
 
 struct eth_static_ip
 {
-	dword ip;
-	dword nm;
-	dword gw;
-	dword p_dns;
-	dword s_dns;
-	dword f_dns;
+	esp_netif_ip_info_t net;
+	esp_ip4_addr_t p_dns;
+	esp_ip4_addr_t s_dns;
+	esp_ip4_addr_t f_dns;
 };
 
 struct eth_ifconfig

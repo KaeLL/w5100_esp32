@@ -18,6 +18,7 @@
 #define S0_RX_WR0  0x42A
 
 #define MR_RST 0x80 /**< reset */
+#define MR_PB  0x10 /**< ping block */
 
 /* S0_MR values */
 #define S0_MR_CLOSE	 0x00 /**< unused socket */

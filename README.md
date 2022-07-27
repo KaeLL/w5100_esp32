@@ -5,6 +5,11 @@ boilerplate and lower-level layer of the driver
 must be provided. The ESP32_W5100 superproject is
 provided as a baseline.
 
+Some polling operations are infinite loops which
+I haven't ever had any problems with, but the
+watchdog should be enabled just in case, or the
+implementation changed.
+
 Roadmap:
 - Done:
     - Static IP
@@ -20,7 +25,6 @@ Roadmap:
     - ...
 
 ## My license
-Public Domain with a plead to whoever
-forks/clones/etc to contribute improvements back,
-by at least opening an issue with a suggestion and
-at most submiting a PR.
+Public Domain with a plea to whoever
+clones/forks/etc to contribute back any
+improvements.
