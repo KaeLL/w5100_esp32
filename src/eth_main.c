@@ -26,7 +26,7 @@ struct
 	esp_eth_handle_t eth_handle;
 	void *eth_netif_glue;
 	struct w5100_config_t w5100_cfg;
-} * eth_cfgs;
+} *eth_cfgs;
 
 void eth_enable_static_ip( const struct eth_static_ip *const sip )
 {

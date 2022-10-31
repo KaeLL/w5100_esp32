@@ -149,6 +149,8 @@ static void emac_w5100_task( void *arg )
 
 static esp_err_t emac_w5100_set_link( esp_eth_mac_t *mac, eth_link_t link )
 {
+	if ( link == ETH_LINK_UP )
+		ESP_ERROR_CHECK( mac->start( mac ) );
 	return ESP_OK;
 }
 
