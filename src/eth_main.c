@@ -13,7 +13,7 @@
 #include "eth_main.h"
 #include "w5100_internal.h"
 
-static const char *const TAG = "eth_main";
+static const char *const __unused TAG = "eth_main";
 
 struct
 {
