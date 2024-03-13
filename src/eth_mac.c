@@ -182,9 +182,10 @@ static esp_err_t emac_w5100_receive( esp_eth_mac_t *mac, uint8_t *buf, uint32_t 
 	*length = w5100_socket_recv( pBuf );
 #if CONFIG_W5100_DEBUG_RX
 	ESP_LOGD( __func__, "length = %" PRIu32, *length );
-	ESP_LOG_BUFFER_HEXDUMP( __func__, *pBuf, *length, ESP_LOG_DEBUG );
+	if ( likely( *length > 0 ) )
+		ESP_LOG_BUFFER_HEXDUMP( __func__, *pBuf, *length, ESP_LOG_DEBUG );
 #endif
-	return *length ? ESP_OK : ESP_FAIL;
+	return *length ? ESP_OK : ESP_ERR_NO_MEM;
 }
 
 static esp_err_t emac_w5100_init( esp_eth_mac_t *mac )
@@ -258,7 +259,12 @@ esp_eth_mac_t *esp_eth_mac_new_w5100( const eth_mac_config_t *const mac_config )
 		!= xTaskCreatePinnedToCore(
 			emac_w5100_task,
 			"w5100_tsk",
-			mac_config->rx_task_stack_size,
+			mac_config->rx_task_stack_size +
+#if CONFIG_W5100_DEBUG_RX
+				1024,
+#else
+				0,
+#endif
 			emac,
 			mac_config->rx_task_prio,
 			&emac->rx_task_hdl,

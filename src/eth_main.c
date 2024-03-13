@@ -1,6 +1,7 @@
 
 #include <string.h>
 
+#include "esp_event.h"
 #include "esp_netif.h"
 #include "esp_log.h"
 #include "esp_idf_version.h"
@@ -21,7 +22,8 @@ struct
 	esp_netif_t *eth_netif;
 	esp_eth_handle_t eth_handle;
 	struct w5100_config_t w5100_cfg;
-} * eth_cfgs;
+	char *hostname;
+} *eth_cfgs;
 
 void eth_enable_static_ip( const struct eth_static_ip *const sip )
 {
@@ -75,6 +77,11 @@ void eth_enable_static_ip( const struct eth_static_ip *const sip )
 #endif
 }
 
+static void eth_event_handler_hostname( void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data )
+{
+	ESP_ERROR_CHECK( esp_netif_set_hostname( eth_cfgs->eth_netif, eth_cfgs->hostname ) );
+}
+
 #ifdef CONFIG_TEST_DEINIT
 void eth_deinit( void )
 {
@@ -94,6 +101,9 @@ void eth_deinit( void )
 
 void eth_init( const struct eth_ifconfig *const cfg )
 {
+	ESP_ERROR_CHECK(
+		esp_event_handler_instance_register( ETH_EVENT, ETHERNET_EVENT_START, &eth_event_handler_hostname, NULL, NULL ) );
+
 	esp_netif_inherent_config_t esp_netif_config = ESP_NETIF_INHERENT_DEFAULT_ETH();
 	esp_netif_config_t cfg_spi = { .base = &esp_netif_config, .stack = ESP_NETIF_NETSTACK_DEFAULT_ETH };
 
@@ -103,7 +113,7 @@ void eth_init( const struct eth_ifconfig *const cfg )
 	if ( cfg )
 	{
 		if ( *cfg->hostname )
-			ESP_ERROR_CHECK( esp_netif_set_hostname( eth_cfgs->eth_netif, cfg->hostname ) );
+			eth_cfgs->hostname = strdup( cfg->hostname );
 
 		if ( cfg->sip.net.ip.addr )
 			eth_enable_static_ip( &cfg->sip );
