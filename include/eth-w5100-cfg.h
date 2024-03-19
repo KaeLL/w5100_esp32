@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <stdint.h>
+
 struct w5100_config_t
 {
 	void ( *init )( void );

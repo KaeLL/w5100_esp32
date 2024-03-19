@@ -1,18 +1,15 @@
 
-#include <string.h>
+#include "eth-w5100.h"
 
-#include "esp_event.h"
-#include "esp_netif.h"
-#include "esp_log.h"
-#include "esp_idf_version.h"
-#include "esp_mac.h"
-#include "esp_eth_driver.h"
+#include "eth-w5100-hal.h"
+#include "eth-w5100-if.h"
+
 #include "esp_eth_netif_glue.h"
+#include "esp_event.h"
+#include "esp_log.h"
+#include "esp_mac.h"
+#include "esp_netif.h"
 #include "lwip/ip4_addr.h"
-
-#include "eth_if.h"
-#include "eth_main.h"
-#include "w5100_internal.h"
 
 static const char *const __unused TAG = "eth_main";
 
@@ -25,7 +22,7 @@ struct
 	char *hostname;
 } *eth_cfgs;
 
-void eth_enable_static_ip( const struct eth_static_ip *const sip )
+static void eth_enable_static_ip( const struct eth_static_ip *const sip )
 {
 	esp_netif_ip_info_t old_ip_info;
 
@@ -35,20 +32,20 @@ void eth_enable_static_ip( const struct eth_static_ip *const sip )
 	ESP_ERROR_CHECK( esp_netif_set_ip_info( eth_cfgs->eth_netif, &sip->net ) );
 
 	if ( !ip4_addr_isany_val( sip->p_dns ) )
-		ESP_ERROR_CHECK(
-			esp_netif_set_dns_info( eth_cfgs->eth_netif,
-									ESP_NETIF_DNS_MAIN,
-									&( esp_netif_dns_info_t ) { .ip.u_addr.ip4 = sip->p_dns } ) );
+		ESP_ERROR_CHECK( esp_netif_set_dns_info(
+			eth_cfgs->eth_netif,
+			ESP_NETIF_DNS_MAIN,
+			&( esp_netif_dns_info_t ) { .ip.u_addr.ip4 = sip->p_dns } ) );
 	if ( !ip4_addr_isany_val( sip->s_dns ) )
-		ESP_ERROR_CHECK(
-			esp_netif_set_dns_info( eth_cfgs->eth_netif,
-									ESP_NETIF_DNS_BACKUP,
-									&( esp_netif_dns_info_t ) { .ip.u_addr.ip4 = sip->s_dns } ) );
+		ESP_ERROR_CHECK( esp_netif_set_dns_info(
+			eth_cfgs->eth_netif,
+			ESP_NETIF_DNS_BACKUP,
+			&( esp_netif_dns_info_t ) { .ip.u_addr.ip4 = sip->s_dns } ) );
 	if ( !ip4_addr_isany_val( sip->f_dns ) )
-		ESP_ERROR_CHECK(
-			esp_netif_set_dns_info( eth_cfgs->eth_netif,
-									ESP_NETIF_DNS_FALLBACK,
-									&( esp_netif_dns_info_t ) { .ip.u_addr.ip4 = sip->f_dns } ) );
+		ESP_ERROR_CHECK( esp_netif_set_dns_info(
+			eth_cfgs->eth_netif,
+			ESP_NETIF_DNS_FALLBACK,
+			&( esp_netif_dns_info_t ) { .ip.u_addr.ip4 = sip->f_dns } ) );
 
 #if CONFIG_LOG_MAXIMUM_LEVEL >= 3
 	esp_netif_ip_info_t new_ip_info;

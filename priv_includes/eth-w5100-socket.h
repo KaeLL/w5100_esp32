@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <stdint.h>
+
 void w5100_socket_open( void );
 void w5100_socket_close( void );
 uint16_t w5100_socket_recv( uint8_t **const buf );

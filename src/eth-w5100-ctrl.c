@@ -1,9 +1,10 @@
 
-#include <stdbool.h>
+#include "eth-w5100-ctrl.h"
 
-#include "w5100_internal.h"
-#include "w5100.h"
-#include "w5100_reg.h"
+#include "eth-w5100-hal.h"
+#include "eth-w5100-reg.h"
+
+#include <stdbool.h>
 
 static uint8_t getS0_IR( void )
 {

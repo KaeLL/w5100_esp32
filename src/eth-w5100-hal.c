@@ -1,8 +1,7 @@
 
-#include <stdint.h>
+#include "eth-w5100-hal.h"
 
-#include "w5100_config.h"
-#include "w5100_internal.h"
+#include "eth-w5100-cfg.h"
 
 static const struct w5100_config_t *w5100_cfg;
 

@@ -1,5 +1,5 @@
 
-#include "eth_if.h"
+#include "eth-w5100-if.h"
 
 typedef struct
 {

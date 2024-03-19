@@ -1,11 +1,12 @@
 
-#include <stdlib.h>
+#include "eth-w5100-socket.h"
+
+#include "eth-w5100-hal.h"
+#include "eth-w5100-reg.h"
 
 #include "sys/param.h"
 
-#include "w5100_reg.h"
-#include "w5100_internal.h"
-#include "w5100_socket.h"
+#include <stdlib.h>
 
 static uint16_t read_uint16_reg( const uint16_t addr )
 {

@@ -2,6 +2,7 @@
 #pragma once
 
 #include <stdbool.h>
+#include <stdint.h>
 
 void w5100_init( void );
 bool w5100_wasDataReceiceved( void );
