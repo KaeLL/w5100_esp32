@@ -98,14 +98,13 @@ void eth_deinit( void )
 
 void eth_init( const struct eth_ifconfig *const cfg )
 {
+	ESP_ERROR_CHECK( !( eth_cfgs = calloc( 1, sizeof *eth_cfgs ) ) );
 	ESP_ERROR_CHECK(
 		esp_event_handler_instance_register( ETH_EVENT, ETHERNET_EVENT_START, &eth_event_handler_hostname, NULL, NULL ) );
 
-	esp_netif_inherent_config_t esp_netif_config = ESP_NETIF_INHERENT_DEFAULT_ETH();
-	esp_netif_config_t cfg_spi = { .base = &esp_netif_config, .stack = ESP_NETIF_NETSTACK_DEFAULT_ETH };
-
-	ESP_ERROR_CHECK( !( eth_cfgs = calloc( 1, sizeof *eth_cfgs ) ) );
-	eth_cfgs->eth_netif = esp_netif_new( &cfg_spi );
+	eth_cfgs->eth_netif = esp_netif_new( &( esp_netif_config_t ) {
+		.base = &( esp_netif_inherent_config_t )ESP_NETIF_INHERENT_DEFAULT_ETH(),
+		.stack = ESP_NETIF_NETSTACK_DEFAULT_ETH } );
 
 	if ( cfg )
 	{
