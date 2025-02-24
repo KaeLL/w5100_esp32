@@ -1,14 +1,13 @@
 
 #include "eth-w5100.h"
 
-#include "eth-w5100-hal.h"
-#include "eth-w5100-if.h"
-
 #include "esp_eth_netif_glue.h"
 #include "esp_event.h"
 #include "esp_log.h"
 #include "esp_mac.h"
 #include "esp_netif.h"
+#include "eth-w5100-hal.h"
+#include "eth-w5100-if.h"
 #include "lwip/ip4_addr.h"
 
 static const char *const __unused TAG = "eth_main";
@@ -99,8 +98,12 @@ void eth_deinit( void )
 void eth_init( const struct eth_ifconfig *const cfg )
 {
 	ESP_ERROR_CHECK( !( eth_cfgs = calloc( 1, sizeof *eth_cfgs ) ) );
-	ESP_ERROR_CHECK(
-		esp_event_handler_instance_register( ETH_EVENT, ETHERNET_EVENT_START, &eth_event_handler_hostname, NULL, NULL ) );
+	ESP_ERROR_CHECK( esp_event_handler_instance_register(
+		ETH_EVENT,
+		ETHERNET_EVENT_START,
+		&eth_event_handler_hostname,
+		NULL,
+		NULL ) );
 
 	eth_cfgs->eth_netif = esp_netif_new( &( esp_netif_config_t ) {
 		.base = &( esp_netif_inherent_config_t )ESP_NETIF_INHERENT_DEFAULT_ETH(),

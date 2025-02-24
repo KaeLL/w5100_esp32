@@ -1,9 +1,8 @@
 
+#include "esp_log.h"
 #include "eth-w5100-ctrl.h"
 #include "eth-w5100-if.h"
 #include "eth-w5100-socket.h"
-
-#include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
@@ -175,7 +174,7 @@ static esp_err_t emac_w5100_transmit( esp_eth_mac_t *mac, uint8_t *buf, uint32_t
 
 static esp_err_t emac_w5100_receive( esp_eth_mac_t *mac, uint8_t *buf, uint32_t *length )
 {
-	uint8_t **const pBuf = ( uint8_t * *const )buf;
+	uint8_t **const pBuf = ( uint8_t **const )buf;
 	*length = w5100_socket_recv( pBuf );
 #if CONFIG_W5100_DEBUG_RX
 	ESP_LOGD( __func__, "length = %" PRIu32, *length );
@@ -200,7 +199,8 @@ static esp_err_t emac_w5100_deinit( esp_eth_mac_t *mac )
 {
 	emac_w5100_t *emac = __containerof( mac, emac_w5100_t, parent );
 	ESP_ERROR_CHECK( emac->eth->on_state_changed( emac->eth, ETH_STATE_DEINIT, NULL ) );
-	esp_err_t ret = pdPASS == xTaskNotify( emac->rx_task_hdl, W5100_TSK_DELETE, eSetValueWithoutOverwrite ) ? ESP_OK : ESP_FAIL;
+	esp_err_t ret =
+		pdPASS == xTaskNotify( emac->rx_task_hdl, W5100_TSK_DELETE, eSetValueWithoutOverwrite ) ? ESP_OK : ESP_FAIL;
 	w5100_socket_close();
 
 	return ret;
