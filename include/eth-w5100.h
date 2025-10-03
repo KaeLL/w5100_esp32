@@ -1,8 +1,9 @@
 
 #pragma once
 
-#include "esp_netif_types.h"
 #include "eth-w5100-cfg.h"
+
+#include "esp_netif_types.h"
 
 struct eth_static_ip
 {

@@ -1,5 +1,5 @@
 ---
-# Clang-Format 19.1.0
+# Clang-Format 21.1.2
 AccessModifierOffset: -2
 AlignAfterOpenBracket: Align
 AlignArrayOfStructures: Right
@@ -41,9 +41,11 @@ AllowShortFunctionsOnASingleLine: None
 AllowShortIfStatementsOnASingleLine: Never
 AllowShortLambdasOnASingleLine: All
 AllowShortLoopsOnASingleLine: false
+AllowShortNamespacesOnASingleLine: false
 AlwaysBreakBeforeMultilineStrings: true
 AttributeMacros: ['__ununsed', '__packed']
 BinPackArguments: false
+BinPackLongBracedList: false
 BinPackParameters: false
 BitFieldColonSpacing: Both
 BraceWrapping:
@@ -72,13 +74,15 @@ BreakBeforeBinaryOperators: None
 BreakBeforeBraces: Custom
 BreakBeforeConceptDeclarations: Allowed
 BreakBeforeInlineASMColon: Always
+BreakBeforeTemplateCloser: false
 BreakBeforeTernaryOperators: false
+BreakBinaryOperations: Never
 BreakConstructorInitializers: AfterColon
 BreakFunctionDefinitionParameters: false
 BreakInheritanceList: AfterColon
 BreakStringLiterals: false
 BreakTemplateDeclarations: Yes
-ColumnLimit: 120
+ColumnLimit: 140
 CommentPragmas:  ''
 CompactNamespaces: false
 ConstructorInitializerIndentWidth: 4
@@ -88,6 +92,7 @@ DerivePointerAlignment: false
 DisableFormat:   false
 EmptyLineAfterAccessModifier: Always
 EmptyLineBeforeAccessModifier: LogicalBlock
+EnumTrailingComma: Remove
 ExperimentalAutoDetectBinPacking: false
 FixNamespaceComments: true
 ForEachMacros: ['cJSON_ArrayForEach', 'SLIST_FOREACH', 'LIST_FOREACH', 'STAILQ_FOREACH', 'TAILQ_FOREACH', 'TAILQ_FOREACH_REVERSE', 'CIRCLEQ_FOREACH', 'CIRCLEQ_FOREACH_REVERSE']
@@ -98,7 +103,7 @@ IncludeCategories:
     Priority:        5
   - Regex:           'sdkconfig.h'
     Priority:        3
-  - Regex:           'ar-[a-z0-9\-]+\.h'
+  - Regex:           'eth-[a-z0-9\-]+\.h'
     Priority:        1
   - Regex:           '(aio|arpa\/inet|assert|complex|cpio|ctype|devctl|dirent|dlfcn|endian|errno|fcntl|fenv|float|fmtmsg|fnmatch|ftw|glob|grp|iconv|inttypes|iso646|langinfo|libintl|libgen|limits|locale|math|monetary|mqueue|ndbm|net\/if|netdb|netinet\/in|netinet\/tcp|nl_types|poll|pthread|pwd|regex|sched|search|semaphore|setjmp|signal|spawn|stdalign|stdarg|stdatomic|stdbool|stddef|stdint|stdio|stdlib|stdnoreturn|string|strings|sys\/ipc|sys\/mman|sys\/msg|sys\/resource|sys\/select|sys\/sem|sys\/shm|sys\/socket|sys\/stat|sys\/statvfs|sys\/time|sys\/times|sys\/types|sys\/uio|sys\/un|sys\/utsname|sys\/wait|syslog|tar|termios|tgmath|threads|time|uchar|unistd|utmpx|wchar|wctype|wordexp)\.h'
     Priority:        4
@@ -109,6 +114,7 @@ IncludeIsMainSourceRegex: ''
 IndentAccessModifiers: false
 IndentCaseBlocks: false
 IndentCaseLabels: true
+IndentExportBlock: false
 IndentExternBlock: NoIndent
 IndentGotoLabels: true
 IndentPPDirectives: None
@@ -125,23 +131,27 @@ KeepEmptyLines:
   AtEndOfFile: true
   AtStartOfBlock: false
   AtStartOfFile: true
+KeepFormFeed: false
 LambdaBodyIndentation: Signature
 Language: Cpp
 LineEnding: LF
 MacroBlockBegin: ''
 MacroBlockEnd:   ''
 Macros: ['']
+MacrosSkippedByRemoveParentheses: ['']
 MainIncludeChar: Quote
 MaxEmptyLinesToKeep: 1
 NamespaceIndentation: None
 NamespaceMacros: ['']
+OneLineFormatOffRegex: ''
 PPIndentWidth: 1
 PackConstructorInitializers: CurrentLine
 PenaltyBreakAssignment: 90
 PenaltyBreakBeforeFirstCallParameter: 80
+PenaltyBreakBeforeMemberAccess: 96
 PenaltyBreakComment: 95
 PenaltyBreakFirstLessLess: 1
-PenaltyBreakOpenParenthesis: 1
+PenaltyBreakOpenParenthesis: 150
 PenaltyBreakScopeResolution: 50
 PenaltyBreakString: 100
 PenaltyBreakTemplateDeclaration: 50
@@ -150,10 +160,11 @@ PenaltyIndentedWhitespace: 10
 PenaltyReturnTypeOnItsOwnLine: 99
 PointerAlignment: Right
 QualifierAlignment: Leave
-# QualifierOrder: ['type']
+# QualifierOrder: [friend, constexpr, const, static, inline, type, const, restrict, volatile ]
 ReferenceAlignment: Right
 ReflowComments: true
 RemoveBracesLLVM: true
+RemoveEmptyLinesInUnwrappedLines: true
 RemoveParentheses: ReturnStatement
 RemoveSemicolon: false
 RequiresClausePosition: WithPreceding
@@ -165,6 +176,7 @@ SortIncludes: CaseInsensitive
 SortUsingDeclarations: LexicographicNumeric
 SpaceAfterCStyleCast: false
 SpaceAfterLogicalNot: false
+SpaceAfterOperatorKeyword: false
 SpaceAfterTemplateKeyword: true
 SpaceAroundPointerQualifiers: After
 SpaceBeforeAssignmentOperators: true
@@ -204,8 +216,11 @@ Standard:  Latest
 StatementAttributeLikeMacros: ['']
 StatementMacros: ['']
 TabWidth:        4
+TemplateNames: ['']
 TypeNames: ['']
 TypenameMacros: ['']
 UseTab:          Always
+VariableTemplates: ['']
 WhitespaceSensitiveMacros: ['STRINGIZE']
+WrapNamespaceBodyWithEmptyLines: Never
 ...

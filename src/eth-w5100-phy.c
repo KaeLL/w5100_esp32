@@ -1,6 +1,8 @@
 
 #include "eth-w5100-if.h"
 
+#include <stddef.h>
+
 typedef struct
 {
 	esp_eth_phy_t parent;

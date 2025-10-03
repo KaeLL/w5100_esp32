@@ -3,6 +3,7 @@
 
 #include "eth-w5100-hal.h"
 #include "eth-w5100-reg.h"
+
 #include "sys/param.h"
 
 #include <stdlib.h>
