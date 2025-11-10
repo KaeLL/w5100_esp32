@@ -1,14 +1,13 @@
 
 #include "eth-w5100.h"
 
-#include "eth-w5100-hal.h"
-#include "eth-w5100-if.h"
-
 #include "esp_eth_netif_glue.h"
 #include "esp_event.h"
 #include "esp_log.h"
 #include "esp_mac.h"
 #include "esp_netif.h"
+#include "eth-w5100-hal.h"
+#include "eth-w5100-if.h"
 #include "lwip/ip4_addr.h"
 
 static const char *const __unused TAG = "eth_main";

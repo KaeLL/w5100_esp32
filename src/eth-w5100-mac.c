@@ -1,10 +1,9 @@
 
+#include "esp_log.h"
 #include "eth-w5100-ctrl.h"
 #include "eth-w5100-if.h"
 #include "eth-w5100-socket.h"
-
-#include "esp_log.h"
-#include "freertos/FreeRTOS.h"
+#include "freertos/FreeRTOS.h"	// IWYU pragma: keep
 #include "freertos/task.h"
 
 #include <string.h>

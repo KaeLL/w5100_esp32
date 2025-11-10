@@ -103,19 +103,19 @@ IncludeCategories:
     Priority: 5
   - Regex: '(aio|arpa\/inet|assert|cpio|devctl|dirent|dlfcn|endian|fcntl|fmtmsg|fnmatch|ftw|glob|grp|iconv|langinfo|libgen|libintl|monetary|mqueue|ndbm|net\/if|netdb|netinet\/in|netinet\/tcp|nl_types|poll|pthread|pwd|regex|sched|search|semaphore|spawn|strings|sys\/ipc|sys\/mman|sys\/msg|sys\/resource|sys\/select|sys\/sem|sys\/shm|sys\/socket|sys\/stat|sys\/statvfs|sys\/time|sys\/times|sys\/types|sys\/uio|sys\/un|sys\/utsname|sys\/wait|syslog|tar|termios|unistd|utmpx|wordexp)\.h'
     Priority: 4
-  - Regex: 'sdkconfig.h'
+  - Regex: 'sdkconfig\.h'
     Priority: 3
-  - Regex: 'eth-[a-z0-9\-]+\.h'
-    Priority: 1
   - Regex: 'freertos\/FreeRTOS\.h'
     Priority: 2
-    SortPriority: 3
-  - Regex: 'freertos\/.*\.h'
+    SortPriority: 2
+  - Regex: 'ar-[a-z0-9\-]+\.h'
+    Priority: 1
+  - Regex: 'freertos/.*\.h'
     Priority: 2
-    SortPriority: 4
+    SortPriority: 3
   - Regex: '.*'
     Priority: 2
-    SortPriority: 2
+    SortPriority: 1
 IncludeIsMainRegex: '$'
 IncludeIsMainSourceRegex: ''
 IndentAccessModifiers: false
@@ -166,8 +166,8 @@ PenaltyExcessCharacter: 1000
 PenaltyIndentedWhitespace: 10
 PenaltyReturnTypeOnItsOwnLine: 99
 PointerAlignment: Right
-QualifierAlignment: Leave
-# QualifierOrder: [friend, constexpr, const, static, inline, type, const, restrict, volatile ]
+QualifierAlignment: Custom
+QualifierOrder: [friend, static, constexpr, inline, const, type, restrict, volatile]
 ReferenceAlignment: Right
 ReflowComments: true
 RemoveBracesLLVM: true
